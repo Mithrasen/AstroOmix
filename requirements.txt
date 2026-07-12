@@ -1,0 +1,14 @@
+requests
+pandas
+numpy
+scipy
+statsmodels
+prophet
+lightgbm
+plotly
+streamlit
+python-dotenv
+pytest
+anthropic
+truststore
+openpyxl
