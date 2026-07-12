@@ -1,6 +1,15 @@
 .venv/
 .env
-data/cache/
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# Backend: downloaded archive data and derived DE tables. Both regenerable.
+backend/data/cache/
+backend/results/
+
+# Frontend
+node_modules/
+frontend/dist/
+frontend/.vite/
+.DS_Store

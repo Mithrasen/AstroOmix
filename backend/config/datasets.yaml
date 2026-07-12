@@ -1,0 +1,51 @@
+# Datasets AstroOmix actually uses. See docs/DATA_NOTES.md for why these and not
+# others — several plausible-looking accessions do not contain what their titles
+# suggest.
+
+studies:
+  - accession: OSD-104
+    label: "Rodent Research 1 — soleus"
+    organism: Mus musculus
+    tissue: soleus
+    module: abtest
+    assay: bulk RNA-seq
+    design: 6 flight vs 6 ground control
+    notes: >
+      Antigravity postural muscle; bears the brunt of microgravity unloading and
+      shows the strongest differential expression of the two rodent datasets.
+
+  - accession: OSD-105
+    label: "Rodent Research 1 — tibialis anterior"
+    organism: Mus musculus
+    tissue: tibialis anterior
+    module: abtest
+    assay: bulk RNA-seq
+    design: 6 flight vs 6 ground control
+    notes: >
+      Dorsiflexor, far less affected by unloading than soleus. Fewer DE genes is
+      the biologically expected result, not a bug.
+
+  - accession: OSD-569
+    label: "Inspiration4 — long-read RNA-seq"
+    organism: Homo sapiens
+    tissue: whole blood
+    module: de
+    assay: long-read direct RNA-seq
+    design: 4 crew, timepoints L-92 / L-44 / L-3 / R+1
+    notes: >
+      Pre-vs-post differential expression only. There is exactly ONE post-return
+      timepoint (R+1), so this cannot support trajectory forecasting.
+
+  - accession: OSD-569-CBC
+    label: "Inspiration4 — complete blood count"
+    organism: Homo sapiens
+    tissue: whole blood
+    module: forecast
+    assay: clinical CBC panel
+    design: 4 crew x 7 timepoints x 20 analytes
+    notes: >
+      The forecasting target. This is the only I4 modality with post-return
+      recovery timepoints (R+45, R+82, R+194); the transcriptomics stops at R+1.
+
+# Deliberately excluded: per-astronaut BMD and VO2max are not public at usable
+# resolution and are not to be stubbed, faked, or approximated.

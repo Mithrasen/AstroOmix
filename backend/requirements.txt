@@ -1,0 +1,27 @@
+# API
+fastapi
+uvicorn[standard]
+pyyaml
+
+# Data access
+requests
+truststore      # verify TLS against the OS trust store; see docs/DATA_NOTES.md
+python-dotenv
+openpyxl        # Inspiration4 counts ship as .xlsx
+
+# Analysis
+pandas
+numpy
+scipy
+statsmodels     # hand-rolled NB GLM cross-check (src/abtest/rnaseq.py)
+pydeseq2        # the real DESeq2, served by /api/abtest
+
+# Forecasting (module 2)
+prophet
+lightgbm
+
+# LLM (methods narration)
+anthropic
+
+# Dev
+pytest
