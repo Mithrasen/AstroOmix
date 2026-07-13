@@ -55,7 +55,12 @@ from src.ui.components import (  # noqa: E402
     cardinality_counters,
     mission_timeline,
 )
-from src.ui.assistant_page import render as render_assistant  # noqa: E402
+from src.ui.assistant_embed import (  # noqa: E402
+    DE_CHIPS,
+    FORECAST_CHIPS,
+    METHODS_CHIPS,
+    render_embedded,
+)
 from src.ui.home import render as render_home  # noqa: E402
 from src.ui.theme import inject_theme  # noqa: E402
 from src.upload.analyse import ENGINES, run_de, run_forecast  # noqa: E402
@@ -262,24 +267,57 @@ def upload_abtest():
 
 
 def page_abtest():
-    st.header("Differential Expression — spaceflight vs. ground control")
+    """Upload first. The built-in study is an EXAMPLE, revealed on click."""
+    st.header("Differential Expression")
+    st.caption(
+        "Flight versus ground control. Your counts are the primary path; the "
+        "rodent spaceflight studies below are worked examples."
+    )
+
+    upload_abtest()
+
+    st.write("")
+    st.markdown('<div class="mc-rule"><strong>See a worked example</strong></div>',
+                unsafe_allow_html=True)
 
     catalogue = {s["accession"]: s for s in studies() if s["module"] == "abtest"}
-    left, right = st.columns([2, 3])
+    columns = st.columns(len(catalogue) + 1)
+    for index, accession in enumerate(sorted(catalogue)):
+        with columns[index]:
+            tissue = catalogue[accession]["tissue"]
+            if st.button(f"Open {accession} — {tissue}", key=f"ex_{accession}",
+                         width="stretch"):
+                st.session_state["de_example"] = accession
+                st.rerun()
+    with columns[-1]:
+        if st.session_state.get("de_example") and st.button(
+            "Close example", key="ex_close", width="stretch"
+        ):
+            st.session_state.pop("de_example")
+            st.rerun()
 
-    with left:
-        accession = st.selectbox(
-            "Dataset",
-            sorted(_abtest_accessions()),
-            format_func=lambda a: f"{a} — {catalogue[a]['tissue']}",
-        )
+    chosen = st.session_state.get("de_example")
+    if chosen:
+        abtest_report(chosen, catalogue)
 
-    with right:
-        force = st.checkbox(
-            "Force refresh (re-run DESeq2)",
-            value=False,
-            help="Disabled unless ALLOW_REFRESH=true.",
-        )
+    st.write("")
+    render_embedded(
+        "de",
+        "Scoped to differential expression. It calls the same DESeq2 results you "
+        "see above, and every figure it states is verified against them before you "
+        "see it.",
+        DE_CHIPS,
+    )
+
+
+def abtest_report(accession: str, catalogue: dict):
+    """The built-in study's full report. Identical to what it always was."""
+    force = st.checkbox(
+        "Force refresh (re-run DESeq2)",
+        value=False,
+        key=f"force_{accession}",
+        help="Disabled unless ALLOW_REFRESH=true.",
+    )
 
     # Same guard as the API, same reason: an uncached DESeq2 run peaks at ~2.4 GB
     # across ~18 workers. We reuse allow_refresh() rather than restating the rule.
@@ -344,8 +382,6 @@ def page_abtest():
         "that is 'no result', not 'not significant'."
     )
 
-    # Additive: the OSD-104/105 flow above is untouched.
-    upload_abtest()
 
 
 def volcano(table: pd.DataFrame) -> go.Figure:
@@ -467,8 +503,50 @@ def upload_forecast():
 
 
 def page_forecasting():
-    st.header("Forecasting — Inspiration4 molecular trajectories")
+    """Upload first. The Inspiration4 panel is an EXAMPLE, revealed on click."""
+    st.header("Forecasting")
+    st.caption(
+        "Mission-phase trajectories. Your time series is the primary path; the "
+        "Inspiration4 crew blood panel below is a worked example."
+    )
 
+    upload_forecast()
+
+    st.write("")
+    st.markdown('<div class="mc-rule"><strong>See a worked example</strong></div>',
+                unsafe_allow_html=True)
+
+    left, right = st.columns([2, 1])
+    with left:
+        st.caption(
+            "The SpaceX Inspiration4 crew blood panel — 4 crew, 7 timepoints, "
+            "from pre-launch through months of recovery."
+        )
+    with right:
+        if not st.session_state.get("fc_example"):
+            if st.button("Open the Inspiration4 example", key="fc_open",
+                         width="stretch"):
+                st.session_state["fc_example"] = True
+                st.rerun()
+        elif st.button("Close example", key="fc_close", width="stretch"):
+            st.session_state.pop("fc_example")
+            st.rerun()
+
+    if st.session_state.get("fc_example"):
+        forecast_report()
+
+    st.write("")
+    render_embedded(
+        "forecast",
+        "Scoped to forecasting. It calls the same Prophet/ARIMA/LightGBM fits and "
+        "LOO-CV scores, and it will tell you when a model wins the score but "
+        "cannot forecast.",
+        FORECAST_CHIPS,
+    )
+
+
+def forecast_report():
+    """The built-in CBC report. Identical to what it always was."""
     left, middle, right = st.columns(3)
     with left:
         analyte = st.selectbox(
@@ -491,9 +569,6 @@ def page_forecasting():
         data = forecast_payload(analyte, crew, int(extra_days))
 
     render_forecast(data, int(extra_days))
-
-    # Additive: the CBC flow above is untouched.
-    upload_forecast()
 
 
 def render_forecast(data: dict, extra_days: int):
@@ -735,6 +810,11 @@ def page_integration():
 
 def page_methods():
     st.header("Methods")
+    st.caption(
+        "Every engine choice and the reason for it — including the awkward ones. "
+        "The ortholog/cardinality work is a methods note here; it is no longer a "
+        "user-facing tab, but the code and its findings remain in the repo."
+    )
     path = DOCS / "methods.md"
     if not path.is_file():
         st.error(f"docs/methods.md not found at {path}")
@@ -745,47 +825,52 @@ def page_methods():
 # --- shell -------------------------------------------------------------------
 
 def goto(page: str) -> None:
-    """Switch pages from a button.
+    """Route to a page.
 
-    Streamlit forbids writing session_state["nav_page"] once the radio widget that
-    owns that key exists — so the request is STAGED here and applied on the next
-    run, before the widget is created. Writing it directly raises
-    StreamlitAPIException and takes the page down.
+    "page" is NOT owned by any widget, so it can be written directly. The earlier
+    sidebar version wrote a radio's key after the radio existed, which Streamlit
+    rejects with StreamlitAPIException — that whole class of bug is gone with the
+    sidebar.
     """
-    st.session_state["_pending_page"] = page
+    st.session_state["page"] = page
     st.rerun()
 
 
-# Order serves the walkthrough: the case first, then the hero (the assistant),
-# then the modules it drives, then the reference material.
 PAGES = {
     "Home": lambda: render_home(goto),
-    "Research Assistant": render_assistant,
     "Differential Expression": page_abtest,
     "Forecasting": page_forecasting,
-    "Integration": page_integration,
-    "Study Explorer": page_study_explorer,
     "Methods": page_methods,
 }
 
-st.sidebar.title("🛰️ AstroOmix")
-st.sidebar.caption("Mission control for space-biology omics")
-# Apply any staged navigation BEFORE the radio is instantiated — after that,
-# writing its key is an error.
-_pending = st.session_state.pop("_pending_page", None)
-if _pending in PAGES:
-    st.session_state["nav_page"] = _pending
-elif "nav_page" not in st.session_state:
-    st.session_state["nav_page"] = "Home"
+NAV = ["Differential Expression", "Forecasting", "Methods"]
 
-choice = st.sidebar.radio(
-    "Page", list(PAGES), key="nav_page", label_visibility="collapsed"
-)
-st.sidebar.divider()
-st.sidebar.caption(
-    "Analysis and interpretation for space-biology omics — bring your own data, or "
-    "start from the built-in spaceflight examples. Every number is traced to real "
-    "computation and verified before it is shown."
-)
+if "page" not in st.session_state:
+    st.session_state["page"] = "Home"
 
-PAGES[choice]()
+current = st.session_state["page"]
+if current not in PAGES:
+    current = "Home"
+
+# --- header bar: wordmark left, nav right. No sidebar. --------------------
+st.markdown('<div class="navrow">', unsafe_allow_html=True)
+brand, spacer, *nav_slots = st.columns([2.4, 0.6] + [1.25] * len(NAV))
+
+with brand:
+    if st.button("🛰️  AstroOmix", key="nav_home", width="stretch"):
+        goto("Home")
+
+for slot, name in zip(nav_slots, NAV):
+    with slot:
+        if st.button(
+            name,
+            key=f"nav_{name}",
+            width="stretch",
+            type="primary" if current == name else "secondary",
+        ):
+            goto(name)
+
+st.markdown("</div>", unsafe_allow_html=True)
+st.markdown('<div class="appbar"></div>', unsafe_allow_html=True)
+
+PAGES[current]()

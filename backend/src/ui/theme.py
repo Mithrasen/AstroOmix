@@ -328,6 +328,120 @@ section[data-testid="stSidebar"] label:hover { color: var(--accent); }
 }
 [data-baseweb="tab"]:hover { background: rgba(90,169,230,0.07); }
 [aria-selected="true"][data-baseweb="tab"] { color: var(--accent); }
+
+/* ==========================================================================
+   WEB-APP SHELL — header nav instead of a sidebar.
+   ========================================================================== */
+
+/* The sidebar is gone. Hide its rail and collapse control so nothing of the
+   dashboard chrome remains. */
+section[data-testid="stSidebar"],
+[data-testid="stSidebarCollapsedControl"],
+[data-testid="collapsedControl"] { display: none !important; }
+
+.block-container { padding-top: 1.2rem; max-width: 1240px; }
+
+/* --- header bar ---------------------------------------------------------- */
+.appbar {
+  display: flex; align-items: center; gap: 14px;
+  padding: 4px 2px 14px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 6px;
+}
+.appbar .wordmark {
+  font-family: var(--display);
+  font-weight: 700; font-size: 19px; letter-spacing: -0.01em;
+  color: var(--text); display: flex; align-items: center; gap: 9px;
+}
+.appbar .wordmark .dot { color: var(--accent); }
+.appbar .spacer { flex: 1; }
+.appbar .tag {
+  font-size: 11.5px; color: var(--muted);
+  border: 1px solid var(--border); border-radius: 999px;
+  padding: 3px 10px;
+}
+
+/* Streamlit buttons are the only clickable primitive available, so the nav is
+   built from them and restyled to read as header links rather than buttons. */
+.navrow .stButton > button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--muted);
+  font-weight: 600; font-size: 13.5px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
+  box-shadow: none;
+}
+.navrow .stButton > button:hover {
+  color: var(--text);
+  background: rgba(90,169,230,0.08);
+  border-color: var(--border);
+  transform: none;
+  box-shadow: none;
+}
+.navrow .stButton > button[kind="primary"] {
+  color: var(--accent);
+  background: rgba(90,169,230,0.10);
+  border-color: rgba(90,169,230,0.35);
+}
+
+/* --- landing hero: breathing room, not a control panel -------------------- */
+.landing { padding: 26px 0 8px; }
+.landing .kicker {
+  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--accent); font-weight: 700; margin-bottom: 14px;
+}
+.landing h1 {
+  font-family: var(--display);
+  font-size: 3.1rem; line-height: 1.06; letter-spacing: -0.03em;
+  margin: 0 0 14px;
+}
+.landing .tagline {
+  font-size: 19px; line-height: 1.5; color: var(--accent);
+  font-weight: 500; margin-bottom: 22px; max-width: 30ch;
+}
+.landing .intro {
+  font-size: 15.5px; line-height: 1.75; color: var(--text);
+  max-width: 66ch; margin-bottom: 14px;
+}
+.landing .intro em { color: var(--warn); font-style: normal; font-weight: 600; }
+.landing .orient {
+  font-size: 14.5px; line-height: 1.75; color: var(--muted);
+  max-width: 68ch;
+}
+.landing .orient strong { color: var(--text); font-weight: 600; }
+
+/* --- example-question chips ---------------------------------------------- */
+.chips-label {
+  font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase;
+  color: var(--muted); font-weight: 600; margin: 4px 0 8px;
+}
+.chiprow .stButton > button {
+  background: rgba(90,169,230,0.06);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-weight: 500; font-size: 12.5px;
+  text-align: left; line-height: 1.45;
+  padding: 10px 13px; border-radius: 999px;
+  white-space: normal; height: auto; min-height: 44px;
+}
+.chiprow .stButton > button:hover {
+  border-color: var(--accent);
+  background: rgba(90,169,230,0.12);
+  box-shadow: 0 0 16px rgba(90,169,230,0.14);
+}
+
+/* --- the "see an example" reveal ------------------------------------------ */
+.examplecard {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+  background: var(--panel);
+}
+
+/* --- loading state ------------------------------------------------------- */
+[data-testid="stSpinner"] { color: var(--accent); font-size: 13.5px; }
 """
 
 
