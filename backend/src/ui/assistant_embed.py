@@ -47,14 +47,21 @@ def _render_answer(text: str, withheld) -> None:
 
 
 def render_popout(scope: str, blurb: str, chips: list[str]) -> None:
-    """The assistant as a pop-out panel, placed at the top of a page.
+    """The assistant as a compact pop-out. The analysis is the page; this assists it.
 
-    A `st.popover`, not a `st.dialog`: verified that a popover survives the rerun
-    a widget click causes and keeps its state, whereas a modal that closed on
-    every rerun would kill the agent mid-run.
+    Closed by default, and the trigger is a small right-aligned button rather than
+    a full-width bar — `width="stretch"` made it span the page and dominate the
+    thing it exists to support. The panel itself overlays; it does not displace the
+    analysis below.
+
+    `st.popover`, not `st.dialog`: a popover survives the rerun a widget click
+    causes, whereas a modal that closed on every rerun would kill the agent
+    mid-answer.
     """
-    with st.popover("🛰️  Research Assistant", width="stretch"):
-        render_embedded(scope, blurb, chips)
+    _, trigger = st.columns([3, 1])
+    with trigger:
+        with st.popover("🛰️  Research Assistant"):
+            render_embedded(scope, blurb, chips)
 
 
 def render_embedded(scope: str, blurb: str, chips: list[str]) -> None:

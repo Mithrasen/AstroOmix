@@ -523,7 +523,71 @@ section[data-testid="stSidebar"],
 
 @media (prefers-reduced-motion: reduce) { .wf:hover { transform: none; } }
 
-/* --- assistant pop-out ---------------------------------------------------- */
+/* --- the persistent status badge ------------------------------------------
+   One small, permanent statement of what this analysis is. It replaces four
+   repetitions of the same caveat, and because it is always there it does not
+   need to shout. */
+.badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px; font-weight: 500; letter-spacing: 0.03em;
+  color: var(--warn);
+  background: rgba(216,185,104,0.10);
+  border: 1px solid rgba(216,185,104,0.35);
+  border-radius: 999px;
+  padding: 3px 11px;
+  margin-bottom: 6px;
+}
+
+/* --- methods: capability cards -------------------------------------------- */
+.mcard {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  padding: 16px 18px;
+  background: var(--panel);
+  margin-bottom: 12px;
+  transition: border-color 160ms ease;
+}
+.mcard:hover { border-color: var(--accent); }
+.mcard .num {
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  color: var(--accent); letter-spacing: 0.08em;
+}
+.mcard h4 {
+  font-family: var(--display); font-size: 15.5px; font-weight: 700;
+  margin: 3px 0 8px; color: var(--text);
+}
+.mcard ul { margin: 0; padding-left: 18px; }
+.mcard li {
+  font-size: 13px; line-height: 1.65; color: var(--muted); margin-bottom: 3px;
+}
+.mcard li strong { color: var(--text); font-weight: 600; }
+
+.principle {
+  border: 1px solid var(--warn-border);
+  border-left: 3px solid var(--warn);
+  background: var(--warn-bg);
+  border-radius: 10px;
+  padding: 16px 18px;
+  font-size: 14.5px; line-height: 1.7; color: #f0d9a0;
+  margin-bottom: 8px;
+}
+
+/* --- assistant pop-out ----------------------------------------------------
+   The panel is an OVERLAY. It must never push the analysis down the page — the
+   analysis is the content; the assistant assists it. */
+[data-baseweb="popover"] > div {
+  width: 720px !important;
+  max-width: 92vw !important;
+  max-height: 72vh !important;
+  overflow-y: auto !important;
+  background: var(--panel) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 18px 60px rgba(0,0,0,0.6) !important;
+}
+
 [data-testid="stPopover"] > button {
   border: 1px solid rgba(90,169,230,0.35) !important;
   background: rgba(90,169,230,0.08) !important;

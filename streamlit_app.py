@@ -64,6 +64,7 @@ from src.ui.assistant_embed import (  # noqa: E402
 )
 from src.ui.home import render as render_home  # noqa: E402
 from src.ui.icons import logo  # noqa: E402
+from src.ui import methods_page  # noqa: E402
 from src.ui.theme import inject_theme  # noqa: E402
 from src.upload.analyse import ENGINES, run_de, run_forecast  # noqa: E402
 from src.upload.validate import (  # noqa: E402
@@ -203,11 +204,6 @@ def upload_abtest():
                 key="ab_engine",
             )
 
-        with st.expander("Advanced", expanded=False):
-            st.caption(
-                "Hosted uploads use a resource-safe NB-GLM; worked examples use "
-                "PyDESeq2. See Methods."
-            )
 
         counts_file = st.file_uploader("Counts CSV", type=["csv"], key="ab_counts")
         design_file = st.file_uploader(
@@ -574,27 +570,51 @@ def render_forecast(data: dict, extra_days: int):
     # is not enough: 3 points is fittable, not trustworthy, and the models will
     # happily draw a confident-looking curve on it.
     grade = assess(data["n_timepoints"], data["comparison"]["metrics"])
+    n = data["n_timepoints"]
+    best = data["comparison"]["best_by_mae"]
+    warning = data["comparison"].get("best_by_mae_warning")
 
+    # Three levels of disclosure, not five repetitions of one point. Every caveat
+    # is still here — the n=4x7 note, the reliability reasons, the LOO
+    # reconstruction/extrapolation distinction, the lowest-MAE trap — but each is
+    # said ONCE and the detail is gathered under one expander. Said five times it
+    # reads as anxious; said once, well, it lands harder.
+
+    # (1) persistent badge
+    st.markdown(
+        f'<span class="badge">Exploratory · {n} timepoints</span>',
+        unsafe_allow_html=True,
+    )
+
+    # (2) ONE prominent warning
     if grade["tier"] == "critical":
-        st.error(
-            f"**{grade['headline']}**\n\n"
-            + "\n\n".join(f"- {reason}" for reason in grade["reasons"]),
-            icon="🚫",
-        )
-    elif grade["tier"] == "thin":
+        st.error(f"**{grade['headline']}**", icon="🚫")
+    else:
         st.warning(
-            f"**{grade['headline']}**\n\n"
-            + "\n\n".join(f"- {reason}" for reason in grade["reasons"]),
+            "**This dataset supports descriptive trajectory comparison, not "
+            "validated future prediction.**",
             icon="⚠️",
         )
 
-    st.caption(data["caveat"])
+    # (3) all the detail, once, in one place
+    with st.expander("Why this is limited"):
+        for reason in grade["reasons"]:
+            st.markdown(f"- {reason}")
+        st.markdown(f"- {data['caveat']}")
+        st.markdown(
+            f"- Leave-one-out cross-validation holds out each of the {n} timepoints "
+            "once and fits on the rest. It measures how well a model "
+            "**reconstructs the observed points** — it does **not** validate the "
+            "exploratory horizon."
+        )
+        if warning:
+            st.markdown(
+                f"- **“Lowest MAE” does not mean “best forecaster.”** {warning}"
+            )
+
     st.plotly_chart(trajectory(data), width="stretch")
 
     st.subheader("Model comparison — leave-one-out CV")
-
-    best = data["comparison"]["best_by_mae"]
-    warning = data["comparison"].get("best_by_mae_warning")
 
     label = {"lightgbm": "LightGBM", "prophet": "Prophet", "arima": "ARIMA"}.get(
         best, str(best)
@@ -606,11 +626,6 @@ def render_forecast(data: dict, extra_days: int):
         "This measures reconstruction of observed points, not forecasting ability."
     )
 
-    # The trap: LightGBM usually wins LOO and cannot extrapolate at all. This has
-    # to be impossible to miss, so it sits directly under the callout.
-    if warning:
-        st.warning(f"**“Best” does not mean “best forecaster.”**\n\n{warning}", icon="⚠️")
-
     metrics = pd.DataFrame(data["comparison"]["metrics"]).T.reset_index()
     metrics.columns = ["model", "MAE", "RMSE", "MAPE %", "folds", "failed"]
     metrics["uncertainty"] = metrics["model"].map(
@@ -618,11 +633,6 @@ def render_forecast(data: dict, extra_days: int):
         else "no uncertainty estimate"
     )
     st.dataframe(metrics, width="stretch", hide_index=True)
-    st.caption(
-        f"LOO-CV holds out each of the {data['n_timepoints']} timepoints once and fits "
-        "on the rest. It measures how well a model **interpolates** the observed "
-        "trajectory — it does **not** validate the exploratory horizon below."
-    )
 
     if data.get("whatif"):
         st.subheader(f"Exploratory horizon: {int(extra_days)} days past the last draw")
@@ -812,17 +822,12 @@ def page_integration():
 
 
 def page_methods():
-    st.header("Methods")
-    st.caption(
-        "Every engine choice and the reason for it — including the awkward ones. "
-        "The ortholog/cardinality work is a methods note here; it is no longer a "
-        "user-facing tab, but the code and its findings remain in the repo."
+    render_popout(
+        "methods",
+        "Ask about the engines, the validation rules or the grounding guard.",
+        METHODS_CHIPS,
     )
-    path = DOCS / "methods.md"
-    if not path.is_file():
-        st.error(f"docs/methods.md not found at {path}")
-        return
-    st.markdown(path.read_text(encoding="utf-8"))
+    methods_page.render()
 
 
 # --- shell -------------------------------------------------------------------
