@@ -545,6 +545,56 @@ section[data-testid="stSidebar"],
   margin-bottom: 6px;
 }
 
+/* --- grounding signals: TWO badges, never merged ---------------------------
+   "verified" and "retrieved" are different claims. Different colours, different
+   words, side by side but never combined — a single badge covering both would
+   turn a keyword search result into a validation. */
+.sigrow { display: flex; gap: 8px; flex-wrap: wrap; margin: 2px 0 10px; }
+.sig {
+  font-family: var(--mono);
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em;
+  border-radius: 999px; padding: 3px 10px;
+  border: 1px solid;
+}
+.sig-ok  { color: var(--ok);   border-color: rgba(78,201,160,0.40); background: rgba(78,201,160,0.10); }
+.sig-bad { color: var(--warn); border-color: var(--warn-border);    background: var(--warn-bg); }
+/* Literature gets the COOL accent, deliberately not the green of "verified" —
+   retrieved is a statement about a search, not a quality mark. */
+.sig-lit { color: var(--accent); border-color: rgba(90,169,230,0.40); background: rgba(90,169,230,0.10); }
+.sig-off { color: var(--muted); border-color: var(--border);         background: transparent; }
+
+/* --- a retrieved paper ----------------------------------------------------- */
+.paper {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  padding: 12px 14px 10px;
+  background: var(--panel);
+  margin-bottom: 6px;
+}
+.paper-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 7px; }
+.paper .tag {
+  font-family: var(--mono); font-size: 10px; font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--muted); border: 1px solid var(--border);
+  border-radius: 999px; padding: 2px 8px;
+}
+.paper .tag code {
+  background: none; color: inherit; font-size: 10px; padding: 0;
+}
+.paper-title {
+  display: block;
+  font-family: var(--display); font-size: 14.5px; font-weight: 600;
+  line-height: 1.45; color: var(--text) !important;
+  text-decoration: none !important;
+}
+.paper-title:hover { color: var(--accent) !important; }
+.paper-meta {
+  font-family: var(--mono); font-size: 11px; color: var(--muted);
+  margin-top: 5px;
+}
+.paper-meta a { color: var(--accent) !important; text-decoration: none !important; }
+
 /* --- methods: capability cards -------------------------------------------- */
 .mcard {
   border: 1px solid var(--border);

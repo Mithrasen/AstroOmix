@@ -1,0 +1,38 @@
+{
+ "symbol": "Spp1",
+ "species": "unspecified",
+ "query": "(Spp1) AND (spaceflight OR microgravity OR \"hindlimb unloading\" OR \"muscle atrophy\")",
+ "n_retrieved": 2,
+ "papers": [
+  {
+   "pmid": "39911133",
+   "title": "Multiomics Analysis Reveals Therapeutic Targets for Chronic Kidney Disease With Sarcopenia.",
+   "journal": "Journal of cachexia, sarcopenia and muscle",
+   "year": 2025,
+   "publication_types": [
+    "Journal Article"
+   ],
+   "is_review": false,
+   "abstract": "BACKGROUND: The presence of sarcopenia in patients with chronic kidney disease (CKD) is associated with poor prognosis. The mechanism underlying CKD-induced muscle wasting has not yet been fully explored. This study investigates the influence of renal secretions on muscles using multiomics sequencing.\n\nMETHODS: The kidney transcriptome analysis by RNA-seq and protein profiling by tandem mass tag (TMT), serum TMT and muscle TMT were performed in CKD established using 0.2% adenine and control mice. Spp1 recombinant protein was used to study its effect on myotube atrophy in\u00a0vitro. In animal experiments on CKD, pharmacological inhibition of Spp1 was used to explore the role of Spp1 in skeletal muscle wasting. Transcriptome analysis was performed to identify differentially expressed genes (DEGs) in the gastrocnemius muscle following Spp1 pharmacological inhibition.\n\nRESULTS: In the renal transcriptome and TMT, 503 and 377 proteins/genes respectively were co-upregulated and co-downregulated. In the serum TMT of CKD and normal control (NC) mice, 22 upregulated and 7 downregulated differentially expressed proteins (DEPs) showed the same expression patterns as those in the kidney transcriptome and TMT analysis. Based on bioinformatics analysis and reported studies, we selected Spp1 for further validation. Spp1 recombinant protein was added to C2C12 myotubes in\u00a0vitro, and the results indicated that Spp1 significantly increased the protein levels of the muscle atrophy marker (Murf-1) and promoted the smaller myotubes (all p\u2009<\u20090.05). Compared with NC mice, Spp1 mRNA and protein levels were significantly upregulated in the kidneys of CKD mice, and the serum concentration of Spp1 was also markedly increased (all p\u2009<\u20090.05). In animal experiments, pharmacological inhibition of Spp1 increased the weights of gastrocnemius and tibialis anterior muscles (p\u2009<\u20090.05) and improved muscle atrophy phenotype. Transcriptome analysis showed that DEGs in the gastrocnemius muscle following Spp1 pharmacological inhibition were enriched in protein digestion and absorption, glucagon signalling pathway, apelin signalling pathway and ECM-receptor interaction pathway.\n\nCONCLUSIONS: Our study is the first to establish a regulatory network of kidney-muscle crosstalk to explore the potential mechanism of CKD-related sarcopenia. Employing multiomics analysis, cellular assessment and animal experiments, we have identified that Spp1 could potentialy serve as a promising therapeutic target for CKD patients with sarcopenia.",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/39911133/",
+   "queried_symbol": "Spp1",
+   "queried_species": "unspecified"
+  },
+  {
+   "pmid": "36760811",
+   "title": "LncRNA MALAT1 mediates osteogenic differentiation in osteoporosis by regulating the miR-485-5p/WNT7B axis.",
+   "journal": "Frontiers in endocrinology",
+   "year": 2022,
+   "publication_types": [
+    "Journal Article",
+    "Research Support, Non-U.S. Gov't"
+   ],
+   "is_review": false,
+   "abstract": "INTRODUCTION: Accumulating evidence demonstrates that long non-coding RNAs (lncRNAs) are associated with the development of osteoporosis.\n\nMETHODS: This study aimed to investigate the effects of MALAT1 on osteogenic differentiation and cell apoptosis in osteoporosis. MALAT1 level, detected by RT-qPCR, was downregulated in hindlimb unloading (HU) mice and simulated microgravity (MG)-treated MC3T3-E1 cells. Moreover, osteogenic differentiation-related factor (Bmp4, Col1a1, and Spp1) levels were measured by RT-qPCR and Western blot. ALP activity was detected, and ALP staining was performed. Cell apoptosis was assessed by flow cytometry.\n\nRESULTS: The results revealed that MALAT1 upregulated the expression of Bmp4, Col1a1, and Spp1, and enhanced ALP activity. Knockdown of MALAT1 suppressed their expression and ALP activity, suggesting that MALAT1 promoted osteogenic differentiation. Additionally, MALAT1 inhibited apoptosis, increased Bax and caspase-3 levels, and decreased Bcl-2 level. However, knockdown of MALAT1 had opposite results. In MG cells, MALAT1 facilitated osteogenic differentiation and suppressed apoptosis. Furthermore, miR-485-5p was identified as a target of MALAT1, and WNT7B was verified as a target of miR-485-5p. Overexpression of miR-485-5p rescued the promotion of osteogenic differentiation and the inhibition of apoptosis induced by MALAT1. Knockdown of WNT7B abolished the facilitation of osteogenic differentiation and the suppression of apoptosis induced by downregulation of miR-485-5p.\n\nDISCUSSION: In conclusion, MALAT1 promoted osteogenic differentiation and inhibited cell apoptosis through the miR-485-5p/WNT7B axis, which suggested that MALAT1 is a potential target to alleviate osteoporosis.",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/36760811/",
+   "queried_symbol": "Spp1",
+   "queried_species": "unspecified"
+  }
+ ],
+ "retrieval_note": "These papers were RETRIEVED by a keyword query. Retrieval is not endorsement: a hit means the gene symbol and a spaceflight term co-occur in the record, not that the paper studied this gene in spaceflight, and not that it supports any claim about it."
+}

@@ -1,0 +1,24 @@
+{
+ "symbol": "ABLIM1",
+ "species": "human",
+ "query": "(ABLIM1) AND (spaceflight OR microgravity OR \"hindlimb unloading\" OR \"muscle atrophy\")",
+ "n_retrieved": 1,
+ "papers": [
+  {
+   "pmid": "21865726",
+   "title": "Differential gene regulation under altered gravity conditions in follicular thyroid cancer cells: relationship between the extracellular matrix and the cytoskeleton.",
+   "journal": "Cellular physiology and biochemistry : international journal of experimental cellular physiology, biochemistry, and pharmacology",
+   "year": 2011,
+   "publication_types": [
+    "Journal Article",
+    "Research Support, Non-U.S. Gov't"
+   ],
+   "is_review": false,
+   "abstract": "Extracellular matrix proteins, adhesion molecules, and cytoskeletal proteins form a dynamic network interacting with signalling molecules as an adaptive response to altered gravity. An important issue is the exact differentiation between real microgravity responses of the cells or cellular reactions to hypergravity and/or vibrations. To determine the effects of real microgravity on human cells, we used four DLR parabolic flight campaigns and focused on the effects of short-term microgravity (22 s), hypergravity (1.8 g), and vibrations on ML-1 thyroid cancer cells. No signs of apoptosis or necrosis were detectable. Gene array analysis revealed 2,430 significantly changed transcripts. After 22 s microgravity, the F-actin and cytokeratin cytoskeleton was altered, and ACTB and KRT80 mRNAs were significantly upregulated after the first and thirty-first parabolas. The COL4A5 mRNA was downregulated under microgravity, whereas OPN and FN were significantly upregulated. Hypergravity and vibrations did not change ACTB, KRT-80 or COL4A5 mRNA. MTSS1 and LIMA1 mRNAs were downregulated/slightly upregulated under microgravity, upregulated in hypergravity and unchanged by vibrations. These data indicate that the graviresponse of ML-1 cells occurred very early, within the first few seconds. Downregulated MTSS1 and upregulated LIMA1 may be an adaptive mechanism of human cells for stabilizing the cytoskeleton under microgravity conditions.",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/21865726/",
+   "queried_symbol": "ABLIM1",
+   "queried_species": "human"
+  }
+ ],
+ "retrieval_note": "These papers were RETRIEVED by a keyword query. Retrieval is not endorsement: a hit means the gene symbol and a spaceflight term co-occur in the record, not that the paper studied this gene in spaceflight, and not that it supports any claim about it."
+}

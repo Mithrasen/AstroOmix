@@ -23,6 +23,12 @@ backend/data/cache/*
 !backend/data/cache/forecast/
 !backend/data/cache/integrate/
 
+# Retrieved PubMed records (committed). Small, and they are a courtesy to NCBI as
+# much as to us: a demo that re-queries E-utilities on every click is a demo that
+# gets throttled mid-sentence. Committing them means the literature a viewer sees
+# is served from disk, and a PubMed outage cannot take the feature down live.
+!backend/data/cache/literature/
+
 # The I4 complete-blood-count CSV (9 KB). GET /api/forecast (the analyte
 # allowlist that populates the dropdown) is not itself cached and parses this
 # file, so without it that first request makes a live call to OSDR.

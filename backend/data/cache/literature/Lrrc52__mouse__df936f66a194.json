@@ -1,0 +1,8 @@
+{
+ "symbol": "Lrrc52",
+ "species": "mouse",
+ "query": "(Lrrc52) AND (spaceflight OR microgravity OR \"hindlimb unloading\" OR \"muscle atrophy\")",
+ "n_retrieved": 0,
+ "papers": [],
+ "retrieval_note": "These papers were RETRIEVED by a keyword query. Retrieval is not endorsement: a hit means the gene symbol and a spaceflight term co-occur in the record, not that the paper studied this gene in spaceflight, and not that it supports any claim about it."
+}

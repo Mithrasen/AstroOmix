@@ -1,0 +1,24 @@
+{
+ "symbol": "Ostn",
+ "species": "mouse",
+ "query": "(Ostn) AND (spaceflight OR microgravity OR \"hindlimb unloading\" OR \"muscle atrophy\")",
+ "n_retrieved": 1,
+ "papers": [
+  {
+   "pmid": "38232727",
+   "title": "Exercise-induced Musclin determines the fate of fibro-adipogenic progenitors to control muscle homeostasis.",
+   "journal": "Cell stem cell",
+   "year": 2024,
+   "publication_types": [
+    "Journal Article",
+    "Research Support, Non-U.S. Gov't"
+   ],
+   "is_review": false,
+   "abstract": "The effects of exercise on fibro-adipogenic progenitors (FAPs) are unclear, and the direct molecular link is still unknown. In this study, we reveal that exercise reduces the frequency of FAPs and attenuates collagen deposition and adipose formation in injured or disused muscles through Musclin. Mechanistically, Musclin inhibits FAP proliferation and promotes apoptosis in FAPs by upregulating FILIP1L. Chromatin immunoprecipitation (ChIP)-qPCR confirms that FoxO3a is the transcription factor of FILIP1L. In addition, the Musclin/FILIP1L pathway facilitates the phagocytosis of apoptotic FAPs by macrophages through downregulating the expression of CD47. Genetic ablation of FILIP1L in FAPs abolishes the effects of exercise or Musclin on FAPs and the benefits on the reduction of fibrosis and fatty infiltration. Overall, exercise forms a microenvironment of myokines in muscle and prevents the abnormal accumulation of FAPs in a Musclin/FILIP1L-dependent manner. The administration of exogenous Musclin exerts a therapeutic effect, demonstrating a potential therapeutic approach for muscle atrophy or acute muscle injury.",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/38232727/",
+   "queried_symbol": "Ostn",
+   "queried_species": "mouse"
+  }
+ ],
+ "retrieval_note": "These papers were RETRIEVED by a keyword query. Retrieval is not endorsement: a hit means the gene symbol and a spaceflight term co-occur in the record, not that the paper studied this gene in spaceflight, and not that it supports any claim about it."
+}

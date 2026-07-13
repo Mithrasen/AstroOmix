@@ -239,7 +239,14 @@ def test_a_withheld_answer_shows_only_the_neutral_message(monkeypatch):
     assert "stands" not in rendered, "the model argued with the verifier"
     assert "false positive" not in rendered, "verifier internals leaked"
     assert "could not be matched reliably" in rendered
-    assert not any(kind == "md" for kind, _ in shown), "the draft must not be rendered"
+
+    # The ONLY markdown permitted on a withheld answer is the grounding-signal
+    # badge, which is our own output and carries none of the model's text. The
+    # draft itself must not reach the page in any form.
+    drafts = [m for kind, m in shown if kind == "md" and 'class="sig' not in m]
+    assert not drafts, f"the draft must not be rendered, got {drafts}"
+    assert any('sig-bad' in m for kind, m in shown if kind == "md"), \
+        "a withheld answer must show 'Computation: withheld', not 'verified'"
 
 
 def test_a_clean_answer_is_still_rendered_normally(monkeypatch):
@@ -250,4 +257,10 @@ def test_a_clean_answer_is_still_rendered_normally(monkeypatch):
     monkeypatch.setattr(embed.st, "warning", lambda m, **k: shown.append(m))
 
     embed._render_answer("The value at day 197 was 3466.25.", [])
-    assert shown == ["The value at day 197 was 3466.25."]
+
+    assert "The value at day 197 was 3466.25." in shown
+    # Verified, and no literature badge at all — nothing was retrieved, so no
+    # claim about literature may be made either way.
+    signals = [m for m in shown if 'class="sig' in m]
+    assert len(signals) == 1 and "Computation: verified" in signals[0]
+    assert "Literature" not in signals[0]

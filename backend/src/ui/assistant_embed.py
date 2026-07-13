@@ -19,6 +19,7 @@ from src.agent.agent import KeyNotConfigured, ask
 from src.agent.keys import NOT_CONFIGURED_MESSAGE, resolve_api_key
 from src.ui.assistant_page import _render_tool_calls
 from src.ui.icons import orbit
+from src.ui.literature_cards import render_papers, render_signals
 
 # The verifier is FINAL. When it withholds, the model's own draft is not shown at
 # all — because the draft is exactly where the arguing happens: it debates the
@@ -26,24 +27,32 @@ from src.ui.icons import orbit
 # withheld, which defeats the withholding. So on failure the prose is dropped and
 # this replaces it. Nothing about the guard's logic changes; only what is drawn.
 WITHHELD_MESSAGE = (
-    "Some numerical statements could not be matched reliably to the analysis "
-    "output, so the answer was withheld. You can inspect the verified result "
-    "table below or ask again."
+    "Some statements could not be matched reliably to the analysis output or to the "
+    "retrieved literature, so the answer was withheld. You can inspect the verified "
+    "results and the retrieved papers below, or ask again."
 )
 
 
-def _render_answer(text: str, withheld) -> None:
+def _render_answer(text: str, withheld, tool_calls=()) -> None:
     """Draw an answer — or, if the verifier withheld anything, only the notice.
 
     Never renders the draft when `withheld` is non-empty. A partially-redacted
     draft still leaks: the surrounding sentences restate the suppressed figure in
     words, and the model's rebuttal of the verifier reads as though the check were
-    wrong. One neutral message is the whole output.
+    wrong. One neutral message is the whole output. A fabricated PMID withholds on
+    exactly the same terms as a fabricated number.
+
+    The retrieved papers are drawn even when the prose is withheld: they are the
+    tool's own output, not the model's, and the reader can still use them.
     """
+    render_signals(tool_calls, withheld)
+
     if withheld:
         st.warning(WITHHELD_MESSAGE, icon="🛡️")
-        return
-    st.markdown(text)
+    else:
+        st.markdown(text)
+
+    render_papers(tool_calls)
 
 
 def render_popout(scope: str, blurb: str, chips: list[str]) -> None:
@@ -122,7 +131,8 @@ def render_embedded(scope: str, blurb: str, chips: list[str]) -> None:
         with st.chat_message(entry["role"]):
             if entry["role"] == "assistant":
                 _render_tool_calls(entry.get("tool_calls", []))
-                _render_answer(entry["text"], entry.get("withheld"))
+                _render_answer(entry["text"], entry.get("withheld"),
+                               entry.get("tool_calls", []))
             else:
                 st.markdown(entry["text"])
 
@@ -148,7 +158,7 @@ def render_embedded(scope: str, blurb: str, chips: list[str]) -> None:
                 return
 
         _render_tool_calls(reply.tool_calls)
-        _render_answer(reply.text, reply.withheld)
+        _render_answer(reply.text, reply.withheld, reply.tool_calls)
 
         if reply.stopped_early:
             st.warning("Stopped at the tool-call limit.", icon="⚠️")
@@ -170,7 +180,8 @@ def render_embedded(scope: str, blurb: str, chips: list[str]) -> None:
 # the data says; the "why this engine" reasoning belongs in Methods.
 DE_CHIPS = [
     "Which genes show the strongest evidence of change?",
-    "How should I interpret the direction of log2 fold change?",
+    "Which of these genes have published spaceflight or microgravity literature?",
+    "Is the evidence for these genes from mouse, human, or cell models?",
     "What are the main limitations of this comparison?",
 ]
 

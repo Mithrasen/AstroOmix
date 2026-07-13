@@ -132,6 +132,117 @@ def get_de_results(accession: str, top_n: int = 20) -> dict:
     }
 
 
+# --- literature retrieval ----------------------------------------------------
+
+
+def search_literature_tool(gene: str, context_terms: str | None = None,
+                           max_results: int = 5) -> dict:
+    """Retrieve REAL PubMed papers for a gene, mouse and human queried separately.
+
+    This is retrieval, not validation, and the result says so in as many words. The
+    agent is not being handed evidence that a gene matters in spaceflight; it is
+    being handed a list of papers a keyword query returned, for the reader to judge.
+
+    NCBI being down degrades to `literature_unavailable` rather than raising — the
+    rest of the app must keep working when PubMed does not.
+    """
+    from src.literature.genes import resolve_symbols
+    from src.literature.pubmed import LiteratureUnavailable, search_literature
+
+    resolution = resolve_symbols(gene)
+
+    if not resolution["targets"]:
+        return {
+            "gene": gene,
+            "resolution": resolution,
+            "searches": [],
+            "total_retrieved": 0,
+            "note": resolution["note"],
+        }
+
+    searches = []
+    for target in resolution["targets"]:
+        try:
+            result = search_literature(
+                target["symbol"],
+                context_terms=context_terms,
+                species=target["species"],
+                retmax=max(1, min(int(max_results or 5), 5)),
+            )
+        except LiteratureUnavailable as error:
+            return {
+                "gene": gene,
+                "resolution": resolution,
+                "literature_unavailable": True,
+                "error": str(error),
+                "searches": [],
+                "total_retrieved": 0,
+                "note": (
+                    "PubMed could not be reached. Tell the user literature retrieval "
+                    "is temporarily unavailable. Do NOT answer from memory, do NOT "
+                    "name any paper, and do NOT state a PMID — you have retrieved "
+                    "nothing. The rest of the analysis is unaffected."
+                ),
+            }
+        searches.append(result)
+
+    # PubMed's symbol search is CASE-INSENSITIVE. "Lbh" and "LBH" are the same query
+    # to NCBI, so the mouse and human searches routinely return the identical paper.
+    # Displayed as two rows — one tagged mouse, one tagged human — that reads as "the
+    # mouse finding is corroborated by independent human work" when it is ONE paper
+    # counted twice. That is a fabricated corroboration, and it is exactly the failure
+    # this feature exists to prevent. So overlap is detected and stated.
+    seen: dict[str, set] = {}
+    for search in searches:
+        for paper in search["papers"]:
+            seen.setdefault(paper["pmid"], set()).add(search["species"])
+
+    for search in searches:
+        for paper in search["papers"]:
+            queries = sorted(seen[paper["pmid"]])
+            paper["retrieved_by_queries"] = queries
+            if len(queries) > 1:
+                paper["species_evidence"] = "ambiguous"
+                paper["species_note"] = (
+                    "This SAME record was returned by both the mouse and the human "
+                    "symbol query. PubMed's symbol search is case-insensitive, so "
+                    "those queries are not independent. This is ONE paper, not "
+                    "separate mouse and human evidence. Read the abstract to see "
+                    "which organism was actually studied."
+                )
+            else:
+                paper["species_evidence"] = queries[0]
+                paper["species_note"] = (
+                    f"Retrieved by the {queries[0]} symbol query. That is the species "
+                    "of the SYMBOL SEARCHED, not necessarily the organism studied in "
+                    "the paper — the abstract is the authority on that."
+                )
+
+    unique = len(seen)
+    total = sum(s["n_retrieved"] for s in searches)
+
+    return {
+        "gene": gene,
+        "resolution": resolution,
+        "searches": searches,
+        "total_retrieved": total,
+        "unique_papers": unique,
+        "note": (
+            resolution["note"]
+            + " RETRIEVAL ONLY: these papers matched a keyword query. You may cite a "
+            "PMID that appears above and characterise a paper ONLY using wording "
+            "present in its retrieved abstract. If total_retrieved is 0, say that no "
+            "relevant literature was retrieved — that is an honest answer, and it is "
+            "NOT evidence that none exists. IMPORTANT: PubMed symbol search is "
+            "case-insensitive, so the mouse and human queries are NOT independent. "
+            "Where `species_evidence` is 'ambiguous' the same paper was returned by "
+            "both — never present it as mouse evidence corroborated by human "
+            f"evidence. {unique} unique paper(s) were retrieved across {total} result "
+            "row(s)."
+        ),
+    }
+
+
 # --- schemas -----------------------------------------------------------------
 
 TOOLS = [
@@ -203,6 +314,47 @@ TOOLS = [
             "required": ["accession"],
         },
     },
+    {
+        "name": "search_literature",
+        "description": (
+            "RETRIEVE real published papers from PubMed for one gene, via NCBI "
+            "E-utilities. Accepts an ENSMUSG id (resolved to a mouse symbol and its "
+            "human ortholog through MGI) or a bare gene symbol. The mouse symbol and "
+            "the human ortholog are searched as SEPARATE queries and every paper is "
+            "labelled with the species of the symbol that retrieved it.\n\n"
+            "This tool RETRIEVES literature. It does NOT validate, confirm or prove "
+            "anything about a gene. A hit means a keyword query matched, nothing "
+            "more. Cite only PMIDs this tool returned, describe a paper only using "
+            "wording from its retrieved abstract, and report zero results as zero "
+            "results."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "gene": {
+                    "type": "string",
+                    "description": (
+                        "An ENSMUSG id (e.g. 'ENSMUSG00000029304') or a gene symbol "
+                        "(e.g. 'Spp1'). Prefer the ENSMUSG id from get_de_results, "
+                        "so the mouse/human mapping is done by MGI and not by you."
+                    ),
+                },
+                "context_terms": {
+                    "type": "string",
+                    "description": (
+                        "Optional PubMed context clause. Defaults to the "
+                        "space-biology context (spaceflight OR microgravity OR "
+                        "\"hindlimb unloading\" OR \"muscle atrophy\")."
+                    ),
+                },
+                "max_results": {
+                    "type": "integer",
+                    "description": "Papers per species query, 1-5. Default 5.",
+                },
+            },
+            "required": ["gene"],
+        },
+    },
 ]
 
 DISPATCH = {
@@ -210,6 +362,7 @@ DISPATCH = {
     "get_forecast": get_forecast,
     "list_studies": list_studies_tool,
     "get_de_results": get_de_results,
+    "search_literature": search_literature_tool,
 }
 
 

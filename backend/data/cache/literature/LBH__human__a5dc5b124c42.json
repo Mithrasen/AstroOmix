@@ -1,0 +1,37 @@
+{
+ "symbol": "LBH",
+ "species": "human",
+ "query": "(LBH) AND (spaceflight OR microgravity OR \"hindlimb unloading\" OR \"muscle atrophy\")",
+ "n_retrieved": 2,
+ "papers": [
+  {
+   "pmid": "42001322",
+   "title": "A Novel Whey Protein Isolate-Proanthocyanidins Complex Alleviates Muscle Atrophy by Modulating Oxidative Stress.",
+   "journal": "Journal of food science",
+   "year": 2026,
+   "publication_types": [
+    "Journal Article"
+   ],
+   "is_review": false,
+   "abstract": "The study fabricated a whey protein isolate-proanthocyanidins (WPI-PC) non-covalent complex, and evaluated its anti-muscle atrophy effects based on the D-galactose-induced C2C12 senescent cell model and the sarcopenia mouse model. Results showed the complex's optimal preparation conditions: reaction time 1 h, pH 6.5, and WPI:PC = 1:1. Under the above conditions, at sample concentrations of 5 mg/mL and 1 mg/mL, the protein digestibility and DPPH radical scavenging rate reached 86.67 \u00b1 0.97% and 60.74 \u00b1 0.45%, respectively. The antioxidant capacity of the WPI-PC complex was significantly increased compared with WPI, while the protein digestibility of the WPI-PC complex was decreased. 4 mg/mL WPI-PC complex significantly increased the proliferation rate of C2C12 cells induced by 0.32 M and 0.16 M D-galactose by 33.50% and 30.45%, respectively. The sarcopenia mouse model results showed that gavage of the WPI-PC complex significantly increased superoxide dismutase (SOD), while malondialdehyde (MDA) and 8-hydroxy-2'-deoxyguanosine (8-OHdG) contents were markedly lower relative to model group (P < 0.05). Gavaged of WPI-PC-L (250 mg/kg/d.bw) significantly increased the levels of skeletal muscle mass index (SMI) relative to the model group (P < 0.05). The WPI-PC complex significantly elevated muscle cross-sectional area and type II muscle fibers proportion (P < 0.05). In conclusion, the WPI-PC complex could alleviate oxidative stress, thereby improving skeletal muscle atrophy. This study demonstrated great application potential of natural active ingredients and proteins in alleviating age-related diseases through non-covalent complexation.",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42001322/",
+   "queried_symbol": "LBH",
+   "queried_species": "human"
+  },
+  {
+   "pmid": "39218922",
+   "title": "Salidroside alleviates simulated microgravity-induced bone loss by activating the Nrf2/HO-1 pathway.",
+   "journal": "Journal of orthopaedic surgery and research",
+   "year": 2024,
+   "publication_types": [
+    "Journal Article"
+   ],
+   "is_review": false,
+   "abstract": "BACKGROUND: Bone loss caused by microgravity exposure presents a serious threat to the health of astronauts, but existing treatment strategies have specific restrictions. This research aimed to investigate whether salidroside (SAL) can mitigate microgravity-induced bone loss and its underlying mechanism.\n\nMETHODS: In this research, we used hindlimb unloading (HLU) and the Rotary Cell Culture System (RCCS) to imitate microgravity in vivo and in vitro.\n\nRESULTS: The results showed that salidroside primarily enhances bone density, microstructure, and biomechanical properties by stimulating bone formation and suppressing bone resorption, thereby preserving bone mass in HLU rats. In MC3T3-E1 cells cultured under simulated microgravity in rotary wall vessel bioreactors, the expression of osteogenic genes significantly increased after salidroside administration, indicating that salidroside can promote osteoblast differentiation under microgravity conditions. Furthermore, the Nrf2 inhibitor ML385 diminished the therapeutic impact of salidroside on microgravity-induced bone loss. Overall, this research provides the first evidence that salidroside can mitigate bone loss induced by microgravity exposure through stimulating the Nrf2/HO-1 pathway.\n\nCONCLUSION: These findings indicate that salidroside has great potential for treating space-related bone loss in astronauts and suggest that Nrf2/HO-1 is a viable target for counteracting microgravity-induced bone damage.",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/39218922/",
+   "queried_symbol": "LBH",
+   "queried_species": "human"
+  }
+ ],
+ "retrieval_note": "These papers were RETRIEVED by a keyword query. Retrieval is not endorsement: a hit means the gene symbol and a spaceflight term co-occur in the record, not that the paper studied this gene in spaceflight, and not that it supports any claim about it."
+}

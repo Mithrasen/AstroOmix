@@ -1,0 +1,79 @@
+{
+ "symbol": "Lbh",
+ "species": "mouse",
+ "query": "(Lbh) AND (spaceflight OR microgravity OR \"hindlimb unloading\" OR \"muscle atrophy\")",
+ "n_retrieved": 5,
+ "papers": [
+  {
+   "pmid": "42001322",
+   "title": "A Novel Whey Protein Isolate-Proanthocyanidins Complex Alleviates Muscle Atrophy by Modulating Oxidative Stress.",
+   "journal": "Journal of food science",
+   "year": 2026,
+   "publication_types": [
+    "Journal Article"
+   ],
+   "is_review": false,
+   "abstract": "The study fabricated a whey protein isolate-proanthocyanidins (WPI-PC) non-covalent complex, and evaluated its anti-muscle atrophy effects based on the D-galactose-induced C2C12 senescent cell model and the sarcopenia mouse model. Results showed the complex's optimal preparation conditions: reaction time 1 h, pH 6.5, and WPI:PC = 1:1. Under the above conditions, at sample concentrations of 5 mg/mL and 1 mg/mL, the protein digestibility and DPPH radical scavenging rate reached 86.67 \u00b1 0.97% and 60.74 \u00b1 0.45%, respectively. The antioxidant capacity of the WPI-PC complex was significantly increased compared with WPI, while the protein digestibility of the WPI-PC complex was decreased. 4 mg/mL WPI-PC complex significantly increased the proliferation rate of C2C12 cells induced by 0.32 M and 0.16 M D-galactose by 33.50% and 30.45%, respectively. The sarcopenia mouse model results showed that gavage of the WPI-PC complex significantly increased superoxide dismutase (SOD), while malondialdehyde (MDA) and 8-hydroxy-2'-deoxyguanosine (8-OHdG) contents were markedly lower relative to model group (P < 0.05). Gavaged of WPI-PC-L (250 mg/kg/d.bw) significantly increased the levels of skeletal muscle mass index (SMI) relative to the model group (P < 0.05). The WPI-PC complex significantly elevated muscle cross-sectional area and type II muscle fibers proportion (P < 0.05). In conclusion, the WPI-PC complex could alleviate oxidative stress, thereby improving skeletal muscle atrophy. This study demonstrated great application potential of natural active ingredients and proteins in alleviating age-related diseases through non-covalent complexation.",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42001322/",
+   "queried_symbol": "Lbh",
+   "queried_species": "mouse"
+  },
+  {
+   "pmid": "39218922",
+   "title": "Salidroside alleviates simulated microgravity-induced bone loss by activating the Nrf2/HO-1 pathway.",
+   "journal": "Journal of orthopaedic surgery and research",
+   "year": 2024,
+   "publication_types": [
+    "Journal Article"
+   ],
+   "is_review": false,
+   "abstract": "BACKGROUND: Bone loss caused by microgravity exposure presents a serious threat to the health of astronauts, but existing treatment strategies have specific restrictions. This research aimed to investigate whether salidroside (SAL) can mitigate microgravity-induced bone loss and its underlying mechanism.\n\nMETHODS: In this research, we used hindlimb unloading (HLU) and the Rotary Cell Culture System (RCCS) to imitate microgravity in vivo and in vitro.\n\nRESULTS: The results showed that salidroside primarily enhances bone density, microstructure, and biomechanical properties by stimulating bone formation and suppressing bone resorption, thereby preserving bone mass in HLU rats. In MC3T3-E1 cells cultured under simulated microgravity in rotary wall vessel bioreactors, the expression of osteogenic genes significantly increased after salidroside administration, indicating that salidroside can promote osteoblast differentiation under microgravity conditions. Furthermore, the Nrf2 inhibitor ML385 diminished the therapeutic impact of salidroside on microgravity-induced bone loss. Overall, this research provides the first evidence that salidroside can mitigate bone loss induced by microgravity exposure through stimulating the Nrf2/HO-1 pathway.\n\nCONCLUSION: These findings indicate that salidroside has great potential for treating space-related bone loss in astronauts and suggest that Nrf2/HO-1 is a viable target for counteracting microgravity-induced bone damage.",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/39218922/",
+   "queried_symbol": "Lbh",
+   "queried_species": "mouse"
+  },
+  {
+   "pmid": "38397768",
+   "title": "Investigating the Impact of Disrupting the Glutamine Metabolism Pathway on Ammonia Excretion in Crucian Carp (Carassius auratus) under Carbonate Alkaline Stress Using Metabolomics Techniques.",
+   "journal": "Antioxidants (Basel, Switzerland)",
+   "year": 2024,
+   "publication_types": [
+    "Journal Article"
+   ],
+   "is_review": false,
+   "abstract": "With the gradual decline in freshwater resources, the space available for freshwater aquaculture is diminishing and the need to maximize saline water for aquaculture is increasing. This study aimed to elucidate the impact mechanisms of the disruption of the glutamate pathway on serum metabolism and ammonia excretion in crucian carp (Carassius auratus) under carbonate alkaline stress. A freshwater control group (C group), a 20 mmol/L NaHCO3 stress group (L group), and a 40 mmol/L NaHCO3 stress group (H group) were established. After 30 days of exposure, methionine sulfoximine (MSO) was injected to block the glutamate pathway metabolism, and the groups post-blocking were labeled as MC, ML, and MH. Ultra-high-performance liquid chromatography coupled with the quadrupole time-of-flight mass spectrometry (UPLC-Q-TOF/MS) metabolomics technique was employed to detect changes in the composition and content of crucian carp serum metabolites. Significant differential metabolites were identified, and related metabolic pathways were analyzed. The results revealed that, following the glutamate pathway blockade, a total of 228 differential metabolites (DMs) were identified in the three treatment groups. An enrichment analysis indicated significant involvement in glycerophospholipid metabolism, arachidonic acid metabolism, sphingolipid metabolism, purine metabolism, arginine and proline biosynthesis, pantothenate and CoA biosynthesis, glutathione metabolism, and fatty acid degradation, among other metabolic pathways. The results showed that ROS imbalances and L-arginine accumulation in crucian carp after the glutamate pathway blockade led to an increase in oxidative stress and inflammatory responses in vivo, which may cause damage to the structure and function of cell membranes. Crucian carp improves the body's antioxidant capacity and regulates cellular homeostasis by activating glutathione metabolism and increasing the concentration of phosphatidylcholine (PC) analogs. Additionally, challenges such as aggravated ammonia excretion obstruction and disrupted energy metabolism were observed in crucian carp, with the upregulation of purine metabolism alleviating ammonia toxicity and maintaining energy homeostasis through pantothenate and CoA biosynthesis as well as fatty acid degradation. This study elucidated the metabolic changes in crucian carp under carbonate alkaline stress after a glutamate pathway blockade at the cellular metabolism level and screened out the key metabolic pathways, which provide a scientific basis for further in-depth studies on the ammonia excretion of freshwater scleractinian fishes under saline and alkaline habitats at a later stage.",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/38397768/",
+   "queried_symbol": "Lbh",
+   "queried_species": "mouse"
+  },
+  {
+   "pmid": "36013657",
+   "title": "Interface Formation of Medium-Thick AA6061 Al/AZ31B Mg Dissimilar Submerged Friction Stir Welding Joints.",
+   "journal": "Materials (Basel, Switzerland)",
+   "year": 2022,
+   "publication_types": [
+    "Journal Article"
+   ],
+   "is_review": false,
+   "abstract": "The medium-thick Al/Mg dissimilar friction stir welding (FSW) joint has serious groove and cavity defects due to uneven thermal distribution in the thickness direction. The submerged friction stir welding (SFSW) was employed to decrease the peak temperature of the joint and control the thermal gradient of the thickness direction, which were beneficial in suppressing the coarsening of the intermetallic compounds (IMCs) layer and improving the weld formation. According to the SEM results, the thickness value of the IMC layer in the nugget zone and shoulder affect zone decreased from 0.78 \u03bcm and 1.31 \u03bcm in FSW process to 0.59 \u03bcm and 1.21 \u03bcm in SFSW process at the same parameter, respectively. Compared with the FSW process, SFSW improves the thermal accumulation during the process, which inhibits the formation of the IMCs and facilitates the material flow to form a mechanical interlocking structure. This firm interface formation elevates the effective contact area of the whole joint interface and provides a strong connection between the dissimilar metals. Thus, the ultimate strength of the 6 mm thick Al/Mg dissimilar SFSW joints was enhanced to 171 MPa, equivalent to 71.3% of AZ31B Mg alloys strength.",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/36013657/",
+   "queried_symbol": "Lbh",
+   "queried_species": "mouse"
+  },
+  {
+   "pmid": "39215013",
+   "title": "Initial trajectory design of low-thrust spacecraft considering attitude constraints.",
+   "journal": "Scientific reports",
+   "year": 2024,
+   "publication_types": [
+    "Journal Article"
+   ],
+   "is_review": false,
+   "abstract": "The fuel carried by deep space exploration spacecraft is crucial for the completion of their exploration missions, and the fuel for attitude control engines is even more precious. In order to reduce the control requirements for attitude control systems, this paper proposes a shape-based trajectory optimization algorithm that considers attitude constraints for low-thrust spacecraft. This method obtains a more accurate transfer trajectory by considering the change rate and change range constraints of the propulsion acceleration direction of spacecraft. By comparing the simulation results without considering spacecraft attitude constraints, it is confirmed that the proposed algorithm considering attitude constraints is very important for the initial design of transfer trajectories. This is of great significance for high-precision initial trajectory optimization of deep space exploration missions.",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/39215013/",
+   "queried_symbol": "Lbh",
+   "queried_species": "mouse"
+  }
+ ],
+ "retrieval_note": "These papers were RETRIEVED by a keyword query. Retrieval is not endorsement: a hit means the gene symbol and a spaceflight term co-occur in the record, not that the paper studied this gene in spaceflight, and not that it supports any claim about it."
+}
