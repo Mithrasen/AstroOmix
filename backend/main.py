@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
-from routers import abtest, forecast, studies
+from routers import abtest, forecast, integrate, studies
 
 app = FastAPI(
     title="AstroOmix API",
@@ -41,6 +41,7 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.include_router(studies.router)
 app.include_router(abtest.router)
 app.include_router(forecast.router)
+app.include_router(integrate.router)
 
 
 @app.get("/api/health", tags=["meta"])

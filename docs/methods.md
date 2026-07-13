@@ -134,3 +134,69 @@ LightGBM frequently wins that score while being the only model that cannot
 extrapolate at all. When the winner is a model with no predictive interval, the
 response carries `best_by_mae_warning` saying so. Treating `best_by_mae` as
 "the model to trust for the what-if" would be exactly backwards.
+
+---
+
+## Integration — an evidence layer, not a statistical integration
+
+This is the most important sentence in this document: **the integration module
+does not compute a statistical association between the rodent genes and the human
+trajectories, and it does not claim to.** `/api/integrate` returns
+`is_statistical_integration: false` as a machine-readable field, not as a
+disclaimer in prose.
+
+It could not compute one honestly even if asked. The two datasets do not share an
+axis on which a correlation would mean anything:
+
+* **Different tissue — the big one.** OSD-104/105 are mouse **skeletal muscle**
+  (soleus, tibialis anterior). The I4 CBC panel is human **whole blood**. A muscle
+  transcript and a blood cell count are not measurements of the same system.
+* **Different species.** Mouse–human orthology is many-to-many and lossy.
+* **Different missions.** Rodent Research 1 flew ~30+ days; Inspiration4 flew 3.
+* **Different measurement types.** Gene expression counts vs clinical cell counts.
+  A DE gene is not a CBC analyte; there is no row on which to join them.
+
+So what is produced is an evidence table — which rodent DE genes have human
+orthologs, how ambiguous each mapping is — presented **beside** plain-language
+context on which physiological system each CBC analyte tracks, for a human to
+reason about. No number asserts that a rodent gene explains a human trajectory.
+
+**Pathway assignment is deliberately absent.** This project has no gene-set
+database (no MSigDB, GO, or Enrichr), so any "pathway" label would be invented.
+The module says nothing about pathways rather than guessing. Real enrichment would
+mean adding a real gene-set source.
+
+### Orthology: why cardinality is computed on a graph
+
+Orthology comes from MGI (`HOM_MouseHumanSequence.rpt`, plus
+`MGI_Gene_Model_Coord.rpt` to bridge `ENSMUSG` → MGI, since the homology file has
+no Ensembl column). Both are committed to `backend/data/reference/` with their
+source URLs and download date — they are versioned inputs, not live fetches, so
+the same query cannot return different answers on different days.
+
+Every mapping is tagged `one_to_one`, `one_to_many`, `many_to_one`,
+`many_to_many`, or `no_ortholog`. Only `one_to_one` is marked `unambiguous`.
+**Nothing is silently joined, and nothing is dropped** — a gene that vanishes from
+a cross-species table reads as "not significant" rather than "not mappable", which
+is a different and much worse claim.
+
+Cardinality is computed on the **bipartite graph across all homology classes**,
+not class by class, and this is not a technicality. MGI splits `Hsd3b8`, `Hsd3b9`
+and `Hsd3b4` into three separate classes, each paired with `HSD3B1`/`HSD3B2`. Read
+one class at a time, each looks like a tidy one-to-many mapping and the fact that
+`HSD3B1` has three mouse partners is invisible. A per-class reading finds **1**
+many-to-many gene in the whole mouse genome. The graph finds **1,031**:
+
+| cardinality | genes |
+|---|---|
+| one_to_one | 17,092 |
+| many_to_one | 1,692 |
+| many_to_many | 1,031 |
+| one_to_many | 366 |
+| no_ortholog | 1,746 |
+
+That gap is exactly the ambiguity a naive join discards.
+
+Identifiers are keyed on stable **MGI IDs**, not symbols: the mouse ortholog of
+human `TP53` is `Trp53`, not `Tp53`, so a symbol-keyed lookup returns nothing and
+a missing ortholog is indistinguishable from a typo.
