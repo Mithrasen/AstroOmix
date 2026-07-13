@@ -44,7 +44,7 @@ from src.forecast.common import check_training_frame
 
 # --- caps --------------------------------------------------------------------
 
-MAX_COUNTS_BYTES = 6 * 1024 * 1024      # 6 MB — matches the widget cap exactly
+MAX_COUNTS_BYTES = 10 * 1024 * 1024     # 10 MB — matches the widget cap exactly
 MAX_SERIES_BYTES = 1 * 1024 * 1024      # 1 MB — a two-column series is tiny
 MAX_GENES = 30_000
 MAX_SAMPLES = 50

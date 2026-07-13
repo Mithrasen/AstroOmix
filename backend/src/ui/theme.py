@@ -450,26 +450,18 @@ section[data-testid="stSidebar"],
 /* --- loading state ------------------------------------------------------- */
 [data-testid="stSpinner"] { color: var(--accent); font-size: 13.5px; }
 
-/* --- logo: a MARK, not a nav tab ----------------------------------------- */
-.logo { display: flex; align-items: center; gap: 10px; padding-top: 2px; }
+/* --- logo: the MARK is the home button ------------------------------------ */
+.logo {
+  display: flex; align-items: center; gap: 13px;
+  padding-top: 2px;
+  transition: opacity 140ms ease;
+}
 .logo-text {
   font-family: var(--display);
-  font-size: 25px; font-weight: 700; letter-spacing: -0.02em;
+  font-size: 34px; font-weight: 700; letter-spacing: -0.025em;
   color: var(--text); line-height: 1;
 }
 .logo-omix { color: var(--accent); }
-
-/* The "Home" affordance under the mark is a quiet text link, not a button —
-   the mark itself must not read as one more nav tab. */
-.st-key-nav_home .stButton > button {
-  background: transparent; border: none; box-shadow: none;
-  color: var(--muted); font-size: 11.5px; font-weight: 500;
-  padding: 0 0 0 44px; margin-top: -6px;
-  text-align: left;
-}
-.st-key-nav_home .stButton > button:hover {
-  color: var(--accent); background: transparent; transform: none; box-shadow: none;
-}
 
 /* Nav items get the accent so they read as navigation, distinct from the mark. */
 [class*="st-key-nav_"] .stButton > button {
@@ -488,17 +480,31 @@ section[data-testid="stSidebar"],
   color: #d6ecff;
 }
 
-/* nav_home also matches [class*="st-key-nav_"], so quiet it back down. */
+/* nav_home also matches [class*="st-key-nav_"], which would draw it as a nav tab.
+   It is not one — it is an invisible hit-target lying ON TOP of the wordmark.
+   Pulled up over the mark by a negative margin, given zero height so it occupies
+   no layout of its own, and stripped of border, background and text colour. The
+   `height: 0` matters: without it the button would add a second row and push the
+   whole app down. */
+.st-key-nav_home {
+  margin-top: -46px;
+  height: 0;
+  position: relative;
+  z-index: 3;
+}
 .st-key-nav_home .stButton > button,
-.st-key-nav_home .stButton > button:hover {
+.st-key-nav_home .stButton > button:hover,
+.st-key-nav_home .stButton > button:focus,
+.st-key-nav_home .stButton > button:active {
+  width: 275px; height: 52px;
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
-  color: var(--muted);
-  font-size: 11.5px; font-weight: 500;
-  padding: 0 0 0 44px; margin-top: -6px; text-align: left;
+  outline: none !important;
+  color: transparent !important;
+  transform: none !important;
+  cursor: pointer;
 }
-.st-key-nav_home .stButton > button:hover { color: var(--accent); }
 
 /* --- landing: two workflows, side by side -------------------------------- */
 .wf {

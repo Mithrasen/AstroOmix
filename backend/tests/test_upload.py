@@ -13,6 +13,7 @@ import pytest
 
 from src.upload.analyse import ENGINES, run_de, run_forecast
 from src.upload.validate import (
+    MAX_COUNTS_BYTES,
     MAX_GENES,
     MAX_RUNS_PER_SESSION,
     MAX_SAMPLES,
@@ -78,7 +79,10 @@ def test_valid_series_upload_validates_and_runs():
 # --- size and shape caps -----------------------------------------------------
 
 def test_oversized_counts_file_is_rejected():
-    blob = b"x" * (7 * 1024 * 1024)   # over the 6 MB hosted-demo cap
+    # Derived from the cap, never hard-coded: a literal here silently stops being
+    # oversized the moment the cap is raised, and the test keeps passing while
+    # testing nothing.
+    blob = b"x" * (MAX_COUNTS_BYTES + 1024)
     with pytest.raises(UploadError, match="over the .* MB hosted-demo limit"):
         validate_counts(blob)
 

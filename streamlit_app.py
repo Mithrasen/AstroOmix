@@ -58,7 +58,6 @@ from src.ui.components import (  # noqa: E402
 from src.ui.assistant_embed import (  # noqa: E402
     DE_CHIPS,
     FORECAST_CHIPS,
-    METHODS_CHIPS,
     render_embedded,
     render_popout,
 )
@@ -822,11 +821,9 @@ def page_integration():
 
 
 def page_methods():
-    render_popout(
-        "methods",
-        "Ask about the engines, the validation rules or the grounding guard.",
-        METHODS_CHIPS,
-    )
+    # No assistant here. Methods is a reference page — it already states plainly
+    # what a reader would otherwise have to ask, and the assistant belongs where
+    # there is a computed result to interrogate.
     methods_page.render()
 
 
@@ -864,12 +861,17 @@ if current not in PAGES:
 brand, spacer, *nav_slots = st.columns([2.6, 0.4] + [1.3] * len(NAV))
 
 with brand:
-    # The logo is a mark, not a nav tab: bigger, left-aligned, with the icon.
+    # The mark IS the home button. Streamlit cannot make injected HTML clickable,
+    # so a real button is laid over the mark and stripped of every visual (see
+    # .st-key-nav_home in theme.py): what you see is the logo, what you click is a
+    # button. That removes the separate "Home" nav item — a wordmark that goes home
+    # is a convention every user already knows, and it does not need a tab.
     st.markdown(
-        f'<div class="logo">{logo(34)}<span class="logo-text">'
+        f'<div class="logo">{logo(46)}<span class="logo-text">'
         f'Astro<span class="logo-omix">Omix</span></span></div>',
         unsafe_allow_html=True,
     )
+    # The label still exists for screen readers; it is only visually transparent.
     if st.button("Home", key="nav_home"):
         goto("Home")
 

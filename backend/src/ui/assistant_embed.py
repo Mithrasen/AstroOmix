@@ -179,10 +179,3 @@ FORECAST_CHIPS = [
     "Which blood markers changed most across the mission?",
     "What are the main limitations of this analysis?",
 ]
-
-# Methods is where implementation reasoning belongs, so it keeps those.
-METHODS_CHIPS = [
-    "Why pydeseq2 rather than R DESeq2 for the deployed app?",
-    "How does the runtime grounding guard work?",
-    "Why is a 3-timepoint analysis blocked?",
-]
