@@ -1,6 +1,6 @@
 # AstroOmix
 
-**Live demo:** _<!-- TODO: paste the Streamlit Cloud URL here -->_
+**Live demo:** [astroomix.streamlit.app](https://astroomix.streamlit.app/)
 
 AstroOmix is a research web app for analysing space-biology data. It runs two
 workflows over real NASA datasets — bulk RNA-seq differential expression (rodent
@@ -48,7 +48,7 @@ Read [docs/METHODS.md](docs/METHODS.md) for the methods and their limitations.
 Requires Python 3.12.
 
 ```bash
-git clone https://github.com/<your-org>/AstroOmix.git
+git clone https://github.com/Mithrasen/AstroOmix.git
 cd AstroOmix
 pip install -r requirements.txt
 streamlit run streamlit_app.py
