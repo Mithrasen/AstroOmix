@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 
 import anthropic
 
+from src.agent.grounding import CORRECTION_PROMPT, verify
 from src.agent.keys import resolve_api_key
 from src.agent.tools import TOOLS, run_tool
 
@@ -112,6 +113,16 @@ class AgentReply:
     tool_calls: list[ToolCall] = field(default_factory=list)
     stopped_early: bool = False
 
+    #: Set when grounding verification had to withhold a figure. The UI shows a
+    #: notice; `text` already has the offending numbers replaced.
+    withheld: list[str] = field(default_factory=list)
+    #: True when the first draft failed verification and the model corrected itself.
+    self_corrected: bool = False
+
+    @property
+    def fully_grounded(self) -> bool:
+        return not self.withheld
+
 
 class KeyNotConfigured(RuntimeError):
     """No API key in st.secrets or .env. Not a crash — a normal, reportable state."""
@@ -127,13 +138,20 @@ def build_client() -> anthropic.Anthropic:
 
 
 def ask(question: str, history: list[dict] | None = None) -> AgentReply:
-    """Run the tool-use loop until Claude stops calling tools."""
+    """Run the tool-use loop, then VERIFY the answer before returning it.
+
+    Verification is not optional and not a test concern. Every number in the final
+    text is checked against the tool results; if any cannot be traced, the model
+    gets exactly one chance to correct itself, and anything still unverifiable is
+    withheld from the user rather than shown.
+    """
     client = build_client()
 
     messages: list[dict] = list(history or [])
     messages.append({"role": "user", "content": question})
 
     calls: list[ToolCall] = []
+    corrected = False
 
     for _ in range(MAX_ITERATIONS):
         response = client.messages.create(
@@ -145,8 +163,34 @@ def ask(question: str, history: list[dict] | None = None) -> AgentReply:
         )
 
         if response.stop_reason != "tool_use":
-            text = "".join(b.text for b in response.content if b.type == "text")
-            return AgentReply(text=text.strip(), tool_calls=calls)
+            text = "".join(b.text for b in response.content if b.type == "text").strip()
+            check = verify(text, calls)
+
+            if check.ok:
+                return AgentReply(text=text, tool_calls=calls, self_corrected=corrected)
+
+            if not corrected:
+                # One chance to fix it. Telling the model exactly which figures
+                # failed works far better than a generic "be careful" — and if it
+                # needs a number it does not have, it can still call a tool.
+                corrected = True
+                messages.append({"role": "assistant", "content": response.content})
+                messages.append({
+                    "role": "user",
+                    "content": CORRECTION_PROMPT.format(
+                        figures=", ".join(sorted(set(check.unverified)))
+                    ),
+                })
+                continue
+
+            # Second failure: withhold. The redacted text keeps the reasoning, the
+            # caveats and any refusal — only the unverifiable figures are removed.
+            return AgentReply(
+                text=check.text,
+                tool_calls=calls,
+                withheld=sorted(set(check.unverified)),
+                self_corrected=True,
+            )
 
         messages.append({"role": "assistant", "content": response.content})
 

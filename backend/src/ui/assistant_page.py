@@ -57,6 +57,13 @@ def render():
         with st.chat_message(entry["role"]):
             if entry["role"] == "assistant":
                 _render_tool_calls(entry.get("tool_calls", []))
+                if entry.get("withheld"):
+                    st.warning(
+                        f"Held back {_count(len(entry['withheld']))} that could not "
+                        "be verified against the computed data: "
+                        f"`{'`, `'.join(entry['withheld'])}`",
+                        icon="🛡️",
+                    )
             st.markdown(entry["text"])
 
     if not question:
@@ -78,18 +85,40 @@ def render():
                 return
 
         _render_tool_calls(reply.tool_calls)
+
+        # Grounding verification ran on this response. If a figure could not be
+        # traced to a tool result, it has already been removed from the text —
+        # say so plainly rather than showing a redaction with no explanation.
+        if reply.withheld:
+            st.warning(
+                f"**I couldn't verify {_count(len(reply.withheld))} against the "
+                "computed data, so I've held "
+                f"{'it' if len(reply.withheld) == 1 else 'them'} back.** Every "
+                "number here is checked against the actual tool output before you "
+                "see it; anything that can't be traced is withheld rather than "
+                "shown. The rest of the answer stands.\n\n"
+                f"Withheld: `{'`, `'.join(reply.withheld)}`",
+                icon="🛡️",
+            )
+
         st.markdown(reply.text)
+
         if reply.stopped_early:
             st.warning("Stopped at the tool-call limit.", icon="⚠️")
 
     st.session_state.assistant_log.append({
         "role": "assistant",
         "text": reply.text,
+        "withheld": reply.withheld,
         "tool_calls": [
             {"name": c.name, "arguments": c.arguments, "result": c.result}
             for c in reply.tool_calls
         ],
     })
+
+
+def _count(n: int) -> str:
+    return "one figure" if n == 1 else f"{n} figures"
 
 
 def _render_tool_calls(calls) -> None:

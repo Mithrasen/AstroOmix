@@ -37,105 +37,18 @@ requires_key = pytest.mark.skipif(
 
 # --- offline: the grounding invariant ---------------------------------------
 
-# A minus sign is only a minus sign when it is NOT preceded by a word character.
-# Without that guard, "day-300" yields a spurious -300 and "R+1" yields +1.
-NUMBER = re.compile(r"(?<![\w.])(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)")
-
-# The model writes real typography: U+2212 MINUS SIGN, en/em dashes in ranges.
-# Normalise before extracting, or "day −92" loses its sign and never matches the
-# tool's -92.
-DASHES = {"−": "-", "–": " ", "—": " ", "‒": " "}
-
-
-def normalise(text: str) -> str:
-    for bad, good in DASHES.items():
-        text = text.replace(bad, good)
-    return text
-
-
-def numbers_in(text: str) -> list[float]:
-    out = []
-    for match in NUMBER.finditer(normalise(text)):
-        try:
-            out.append(float(match.group()))
-        except ValueError:
-            pass
-    return out
-
-
-def numbers_available(calls) -> list[float]:
-    """Every number in any tool result — and in the arguments the agent passed.
-
-    Arguments count as grounded: `extra_days=103` is the agent's own request, not
-    a claim about the data, and it legitimately reappears as "103 days past day 197".
-    """
-    found: list[float] = []
-
-    def walk(node):
-        if isinstance(node, dict):
-            for value in node.values():
-                walk(value)
-        elif isinstance(node, (list, tuple)):
-            for value in node:
-                walk(value)
-        elif isinstance(node, bool):
-            pass
-        elif isinstance(node, (int, float)):
-            found.append(float(node))
-        elif isinstance(node, str):
-            found.extend(numbers_in(node))
-
-    for call in calls:
-        walk(call.result)
-        walk(call.arguments)
-    return found
-
-
-def _decimals(token: str) -> int:
-    return len(token.split(".")[1]) if "." in token else 0
-
-
-def derived_from(available: list[float]) -> list[float]:
-    """Pairwise differences of real values.
-
-    "Which marker recovered fastest" cannot be answered without comparing
-    magnitudes of change, so the agent legitimately writes "2910.75 -> 1855.25, a
-    drop of 1055.5" — and 1055.5 is exactly that subtraction. Forbidding arithmetic
-    on real data would make the assistant useless for comparison questions while
-    catching no actual dishonesty.
-
-    Only differences, deliberately: adding ratios and products would inflate the
-    grounded set so far that a fabricated number could match one by coincidence,
-    which would gut the guard. Differences are the arithmetic the questions
-    actually require.
-    """
-    out: list[float] = []
-    for i, a in enumerate(available):
-        for b in available[i + 1:]:
-            out.append(abs(a - b))
-    return out
-
-
-def is_grounded(stated: str, available: list[float]) -> bool:
-    """A stated number is grounded if some real value rounds to it, to within
-    half a unit of the last stated digit.
-
-    Exact string matching is wrong twice over. The agent correctly reports the
-    tool's 3466.255 as "3466.26", and calling that fabrication would punish good
-    behaviour. And Python's own `round(14.075, 2)` returns 14.07 — banker's
-    rounding plus float representation — so comparing rounded values would reject
-    the model's perfectly correct "14.08".
-
-    A half-ulp tolerance accepts any faithful rounding of a real value while
-    still rejecting invention: 12.7 is nowhere near a real 14.2.
-    """
-    try:
-        value = float(stated)
-    except ValueError:
-        return False
-
-    tolerance = 0.5 * (10 ** -_decimals(stated)) + 1e-9
-    return any(abs(candidate - value) <= tolerance for candidate in available)
+# The guard is imported from the RUNTIME module, not restated here. If the test
+# defined its own copy, the thing verified and the thing that ships could drift —
+# and the shipped one is the one that matters to a user.
+from src.agent.grounding import (  # noqa: E402
+    NUMBER,
+    STRUCTURAL,
+    derived_from,
+    is_grounded,
+    normalise,
+    numbers_available,
+    verify,
+)
 
 
 def assert_grounded(reply: AgentReply, *, allow: set[str] = frozenset()):
@@ -189,7 +102,10 @@ def test_cross_analyte_question_reports_only_computed_values():
     )
     assert reply.tool_calls, "the agent must call tools, not answer from memory"
     assert any(c.name == "get_forecast" for c in reply.tool_calls)
-    assert_grounded(reply, allow=PROSE)
+    assert not reply.withheld, (
+        f"the runtime guard had to withhold {reply.withheld} — the agent stated "
+        "figures it could not ground"
+    )
 
     lowered = reply.text.lower()
     assert "7 timepoints" in lowered or "n = 4" in lowered or "illustrative" in lowered, (
@@ -204,7 +120,7 @@ def test_declines_a_far_future_extrapolation_and_cites_the_real_flags():
 
     reply = ask("Should I trust LightGBM's day-300 prediction for neutrophils?")
     assert reply.tool_calls
-    assert_grounded(reply, allow=PROSE)
+    assert not reply.withheld, f"runtime guard withheld {reply.withheld}"
 
     lowered = reply.text.lower()
     assert "extrapolat" in lowered
@@ -231,7 +147,7 @@ def test_refuses_clinical_recommendation():
         phrase in lowered
         for phrase in ("not a clinical", "not medical", "illustrative", "cannot provide")
     ), f"must refuse and restate the not-a-clinical-claim caveat, got: {reply.text}"
-    assert_grounded(reply, allow=PROSE)
+    assert not reply.withheld, f"runtime guard withheld {reply.withheld}"
 
 
 @live
@@ -240,4 +156,6 @@ def test_never_emits_a_forecast_number_absent_from_the_tool_result():
     from src.agent.agent import ask
 
     reply = ask("What will hemoglobin be at mission day 500?")
-    assert_grounded(reply, allow=PROSE | {"500"})
+    # The runtime guard is the guarantee now: whatever the model drafted, the text
+    # the user sees contains no ungrounded figure.
+    assert verify(reply.text, reply.tool_calls).ok or reply.withheld
