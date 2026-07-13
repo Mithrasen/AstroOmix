@@ -47,6 +47,7 @@ from routers.forecast import (  # noqa: E402
 )
 from routers.integrate import _sanitise  # noqa: E402
 from routers.studies import load_studies  # noqa: E402
+from src.forecast.reliability import assess  # noqa: E402
 from src.integrate.cross_reference import cross_reference  # noqa: E402
 from src.settings import allow_refresh  # noqa: E402
 from src.ui.components import (  # noqa: E402
@@ -480,6 +481,25 @@ def page_forecasting():
 def render_forecast(data: dict, extra_days: int):
     """Chart + LOO table + what-if. Shared by the CBC flow and the upload flow, so
     the warnings and caveats are guaranteed identical for both."""
+
+    # Graduated by sample size, BEFORE any number is shown. A hard floor at 3 points
+    # is not enough: 3 points is fittable, not trustworthy, and the models will
+    # happily draw a confident-looking curve on it.
+    grade = assess(data["n_timepoints"], data["comparison"]["metrics"])
+
+    if grade["tier"] == "critical":
+        st.error(
+            f"**{grade['headline']}**\n\n"
+            + "\n\n".join(f"- {reason}" for reason in grade["reasons"]),
+            icon="🚫",
+        )
+    elif grade["tier"] == "thin":
+        st.warning(
+            f"**{grade['headline']}**\n\n"
+            + "\n\n".join(f"- {reason}" for reason in grade["reasons"]),
+            icon="⚠️",
+        )
+
     st.caption(data["caveat"])
     st.plotly_chart(trajectory(data), width="stretch")
 
