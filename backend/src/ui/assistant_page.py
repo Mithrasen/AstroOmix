@@ -54,6 +54,13 @@ def render():
 
     question = st.chat_input("Ask about the forecasts, the DE results, or the data…")
 
+    # A question handed over from the landing page's CTA. Presentation plumbing:
+    # it becomes an ordinary question and goes down the identical `ask()` path —
+    # the agent, the tools and the grounding guard are untouched by it.
+    prefilled = st.session_state.pop("prefill_question", None)
+    if prefilled and not question:
+        question = prefilled
+
     for entry in st.session_state.assistant_log:
         with st.chat_message(entry["role"]):
             if entry["role"] == "assistant":

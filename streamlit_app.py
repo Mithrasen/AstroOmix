@@ -56,6 +56,7 @@ from src.ui.components import (  # noqa: E402
     mission_timeline,
 )
 from src.ui.assistant_page import render as render_assistant  # noqa: E402
+from src.ui.home import render as render_home  # noqa: E402
 from src.ui.theme import inject_theme  # noqa: E402
 from src.upload.analyse import ENGINES, run_de, run_forecast  # noqa: E402
 from src.upload.validate import (  # noqa: E402
@@ -165,7 +166,15 @@ UPLOAD_BANNER = (
 
 def upload_abtest():
     """'Upload your own data' — additive. The OSD-104/105 flow above is untouched."""
-    with st.expander("📤 Upload your own data", expanded=False):
+    st.markdown(
+        '<div class="mc-rule"><strong>Analyse your own data</strong></div>',
+        unsafe_allow_html=True,
+    )
+    st.caption(
+        "A co-equal path, not an afterthought. OSD-104/105 are the built-in "
+        "example; your counts run the same pipeline and get the same caveats."
+    )
+    with st.container(border=True):
         st.caption(
             f"Counts CSV: genes as rows (first column = gene ID), samples as columns. "
             f"Limits: {MAX_COUNTS_BYTES // 1024 // 1024} MB, {MAX_GENES:,} genes, "
@@ -253,7 +262,7 @@ def upload_abtest():
 
 
 def page_abtest():
-    st.header("A/B Testing — spaceflight vs. ground control")
+    st.header("Differential Expression — spaceflight vs. ground control")
 
     catalogue = {s["accession"]: s for s in studies() if s["module"] == "abtest"}
     left, right = st.columns([2, 3])
@@ -396,7 +405,16 @@ def volcano(table: pd.DataFrame) -> go.Figure:
 
 def upload_forecast():
     """'Upload your own time series' — additive. The CBC flow above is untouched."""
-    with st.expander("📤 Upload your own time series", expanded=False):
+    st.markdown(
+        '<div class="mc-rule"><strong>Analyse your own time series</strong></div>',
+        unsafe_allow_html=True,
+    )
+    st.caption(
+        "A co-equal path, not an afterthought. The Inspiration4 CBC panel is the "
+        "built-in example; your series runs the same models, the same LOO-CV, and "
+        "the same reliability tiers."
+    )
+    with st.container(border=True):
         st.caption(
             f"CSV with a `day` and a `value` column (a group/crew column is ignored "
             f"for now). `day` must already be a numeric mission day, not a raw "
@@ -726,23 +744,48 @@ def page_methods():
 
 # --- shell -------------------------------------------------------------------
 
+def goto(page: str) -> None:
+    """Switch pages from a button.
+
+    Streamlit forbids writing session_state["nav_page"] once the radio widget that
+    owns that key exists — so the request is STAGED here and applied on the next
+    run, before the widget is created. Writing it directly raises
+    StreamlitAPIException and takes the page down.
+    """
+    st.session_state["_pending_page"] = page
+    st.rerun()
+
+
+# Order serves the walkthrough: the case first, then the hero (the assistant),
+# then the modules it drives, then the reference material.
 PAGES = {
-    "Study Explorer": page_study_explorer,
-    "A/B Testing": page_abtest,
+    "Home": lambda: render_home(goto),
+    "Research Assistant": render_assistant,
+    "Differential Expression": page_abtest,
     "Forecasting": page_forecasting,
     "Integration": page_integration,
-    "Research Assistant": render_assistant,
+    "Study Explorer": page_study_explorer,
     "Methods": page_methods,
 }
 
 st.sidebar.title("🛰️ AstroOmix")
-st.sidebar.caption("Space biology, two ways")
-choice = st.sidebar.radio("Page", list(PAGES), label_visibility="collapsed")
+st.sidebar.caption("Mission control for space-biology omics")
+# Apply any staged navigation BEFORE the radio is instantiated — after that,
+# writing its key is an error.
+_pending = st.session_state.pop("_pending_page", None)
+if _pending in PAGES:
+    st.session_state["nav_page"] = _pending
+elif "nav_page" not in st.session_state:
+    st.session_state["nav_page"] = "Home"
+
+choice = st.sidebar.radio(
+    "Page", list(PAGES), key="nav_page", label_visibility="collapsed"
+)
 st.sidebar.divider()
 st.sidebar.caption(
-    "Rodent spaceflight A/B testing (NASA OSDR) and Inspiration4 molecular "
-    "trajectories. All analysis code is shared with the FastAPI service — this is a "
-    "UI, not a reimplementation."
+    "Analysis and interpretation for space-biology omics — bring your own data, or "
+    "start from the built-in spaceflight examples. Every number is traced to real "
+    "computation and verified before it is shown."
 )
 
 PAGES[choice]()

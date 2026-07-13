@@ -25,6 +25,7 @@ import streamlit as st
 _FONTS = (
     "@import url('https://fonts.googleapis.com/css2?"
     "family=Inter:wght@400;500;600;700&"
+    "family=Space+Grotesk:wght@500;600;700&"
     "family=JetBrains+Mono:wght@400;500;700&display=swap');"
 )
 
@@ -38,9 +39,28 @@ _CSS = """
   --accent: #5aa9e6;
   --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --display: 'Space Grotesk', 'Inter', -apple-system, sans-serif;
 }
 
 html, body, [class*="css"], .stApp { font-family: var(--sans); }
+
+/* --- hide Streamlit's default chrome -------------------------------------
+   The hamburger menu, the Deploy button, the footer, and the top-right
+   status/decoration. This should read as a product, not a Streamlit demo.
+   Both the modern data-testid selectors and the older id/tag selectors are
+   listed so it survives a Streamlit version bump. The header element itself
+   is only made transparent, never hidden — hiding it takes the sidebar's
+   collapse control with it, which strands anyone who closes the sidebar. */
+#MainMenu,
+[data-testid="stMainMenu"],
+[data-testid="stToolbar"],
+[data-testid="stToolbarActions"],
+[data-testid="stStatusWidget"],
+[data-testid="stDecoration"],
+[data-testid="stAppDeployButton"],
+footer { display: none !important; }
+
+[data-testid="stHeader"], .stApp > header { background: transparent; }
 
 /* --- starfield -----------------------------------------------------------
    Three layered radial-gradient dot fields at different scales, drifting at
@@ -110,7 +130,7 @@ section[data-testid="stSidebar"] {
 }
 
 /* --- typography ---------------------------------------------------------- */
-h1, h2, h3 { font-family: var(--sans); font-weight: 700; letter-spacing: -0.02em; }
+h1, h2, h3 { font-family: var(--display); font-weight: 600; letter-spacing: -0.02em; }
 h1 { font-size: 2.0rem; }
 h2 { font-size: 1.45rem; }
 h3 { font-size: 1.1rem; }
@@ -161,6 +181,153 @@ h2 { margin-top: 1.4rem; margin-bottom: 0.4rem; }
 /* Sidebar nav */
 section[data-testid="stSidebar"] label { transition: color 140ms ease; }
 section[data-testid="stSidebar"] label:hover { color: var(--accent); }
+
+/* ==========================================================================
+   MISSION CONTROL — one language across every page.
+   Purely presentational. Nothing below changes a computed value.
+   ========================================================================== */
+
+:root {
+  /* One cool accent for interactive things. One WARM accent reserved for
+     honesty flags — caveats, warnings, withheld figures — so a safety notice is
+     visually distinct from a button at a glance and can never be mistaken for
+     ordinary chrome. */
+  --warn: #d8b968;
+  --warn-bg: #2a2113;
+  --warn-border: #6b5424;
+  --danger: #e0776c;
+  --danger-bg: #2a1a1a;
+  --danger-border: #6b2d2d;
+  --ok: #4ec9a0;
+}
+
+/* --- data typography ------------------------------------------------------
+   Numbers, gene IDs and accessions are read character-by-character, so they get
+   the monospace face everywhere — tables, metrics, code, the tool-call panel. */
+[data-testid="stDataFrame"] { font-family: var(--mono); font-size: 13px; }
+[data-testid="stMetricValue"], .stCode, code, pre { font-family: var(--mono) !important; }
+
+/* --- honesty flags: WARM, never cool -------------------------------------
+   Streamlit's st.warning / st.error carry every caveat in this app: the n=3
+   reliability tier, the best_by_mae trap, flat_extrapolation, the withheld-figure
+   notice, the not-a-statistical-integration banner. They are styled as one family
+   so a judge learns the visual language once. Text is untouched — only colour. */
+[data-testid="stAlert"] {
+  border-radius: 10px;
+  border-left-width: 4px;
+  border-left-style: solid;
+  line-height: 1.6;
+}
+/* warning (amber) — a caveat you must read */
+[data-testid="stAlert"]:has(svg[data-testid="stAlertDynamicIcon"]),
+[data-testid="stAlert"] { border-left-color: var(--warn); }
+
+/* --- section headers with an orbital rule --------------------------------- */
+.mc-rule {
+  display: flex; align-items: center; gap: 12px;
+  margin: 6px 0 14px;
+}
+.mc-rule::after {
+  content: ""; flex: 1; height: 1px;
+  background: linear-gradient(90deg, var(--border), transparent);
+}
+
+/* --- the case/landing page ------------------------------------------------ */
+.hero {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 34px 36px 30px;
+  background:
+    radial-gradient(ellipse 80% 120% at 88% 0%, rgba(90,169,230,0.10), transparent 60%),
+    radial-gradient(ellipse 60% 100% at 0% 100%, rgba(201,162,39,0.06), transparent 60%),
+    var(--panel);
+  overflow: hidden;
+}
+.hero .stakes {
+  font-size: 14.5px; line-height: 1.65; color: var(--muted);
+  max-width: 62ch;
+}
+.hero h1 {
+  font-family: var(--display);
+  font-size: 2.05rem; line-height: 1.2;
+  margin: 14px 0 12px; letter-spacing: -0.02em;
+}
+.hero h1 .lede { color: var(--accent); }
+.hero h1 .refuse { color: var(--warn); }
+.hero .sub {
+  font-size: 15px; line-height: 1.7; color: var(--text);
+  max-width: 68ch; margin-bottom: 4px;
+}
+
+.persona {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  padding: 16px 18px;
+  background: var(--panel);
+}
+.persona .who {
+  font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase;
+  color: var(--accent); font-weight: 600; margin-bottom: 6px;
+}
+.persona p { margin: 0; font-size: 14px; line-height: 1.65; color: var(--text); }
+
+/* honesty strip — the differentiator, stated plainly */
+.honesty {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+.honesty .card {
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--warn);
+  border-radius: 10px;
+  padding: 16px 18px;
+  background: var(--panel);
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+.honesty .card:hover {
+  transform: translateY(-2px);
+  border-color: var(--warn);
+  box-shadow: 0 0 22px rgba(216,185,104,0.14);
+}
+.honesty .card h4 {
+  margin: 10px 0 6px; font-size: 14px; font-weight: 700;
+  font-family: var(--display); color: var(--text);
+}
+.honesty .card p { margin: 0; font-size: 12.5px; line-height: 1.6; color: var(--muted); }
+.honesty .card svg { display: block; }
+
+/* --- inline SVG motifs: subtle, never competing with data ----------------- */
+.motif { opacity: 0.85; transition: opacity 220ms ease, transform 220ms ease; }
+.motif:hover { opacity: 1; }
+.orbit-spin { transform-origin: center; animation: orbit 26s linear infinite; }
+.helix-drift { animation: helixdrift 7s ease-in-out infinite; transform-origin: center; }
+.node-pulse { animation: nodepulse 3.4s ease-in-out infinite; transform-origin: center; }
+
+@keyframes orbit { to { transform: rotate(360deg); } }
+@keyframes helixdrift { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes nodepulse { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
+
+/* Motion is decoration. Anyone who has asked the OS to stop it gets a static
+   page — the icons read fine still. Same rule the starfield already follows. */
+@media (prefers-reduced-motion: reduce) {
+  .orbit-spin, .helix-drift, .node-pulse { animation: none !important; }
+  .honesty .card:hover { transform: none; }
+}
+
+/* --- co-equal paths: the built-in example vs. your own data ---------------- */
+[data-baseweb="tab-list"] {
+  gap: 6px;
+  border-bottom: 1px solid var(--border);
+}
+[data-baseweb="tab"] {
+  font-family: var(--sans); font-weight: 600; font-size: 14px;
+  padding: 9px 16px; border-radius: 8px 8px 0 0;
+  transition: color 160ms ease, background 160ms ease;
+}
+[data-baseweb="tab"]:hover { background: rgba(90,169,230,0.07); }
+[aria-selected="true"][data-baseweb="tab"] { color: var(--accent); }
 """
 
 
