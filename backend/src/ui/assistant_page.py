@@ -13,6 +13,7 @@ import json
 import streamlit as st
 
 from src.agent.agent import KeyNotConfigured, ask
+from src.agent.grounding import WITHHELD
 from src.agent.keys import NOT_CONFIGURED_MESSAGE, resolve_api_key
 
 EXAMPLES = [
@@ -57,13 +58,7 @@ def render():
         with st.chat_message(entry["role"]):
             if entry["role"] == "assistant":
                 _render_tool_calls(entry.get("tool_calls", []))
-                if entry.get("withheld"):
-                    st.warning(
-                        f"Held back {_count(len(entry['withheld']))} that could not "
-                        "be verified against the computed data: "
-                        f"`{'`, `'.join(entry['withheld'])}`",
-                        icon="🛡️",
-                    )
+                withheld_notice(entry.get("withheld"))
             st.markdown(entry["text"])
 
     if not question:
@@ -89,17 +84,7 @@ def render():
         # Grounding verification ran on this response. If a figure could not be
         # traced to a tool result, it has already been removed from the text —
         # say so plainly rather than showing a redaction with no explanation.
-        if reply.withheld:
-            st.warning(
-                f"**I couldn't verify {_count(len(reply.withheld))} against the "
-                "computed data, so I've held "
-                f"{'it' if len(reply.withheld) == 1 else 'them'} back.** Every "
-                "number here is checked against the actual tool output before you "
-                "see it; anything that can't be traced is withheld rather than "
-                "shown. The rest of the answer stands.\n\n"
-                f"Withheld: `{'`, `'.join(reply.withheld)}`",
-                icon="🛡️",
-            )
+        withheld_notice(reply.withheld)
 
         st.markdown(reply.text)
 
@@ -117,8 +102,37 @@ def render():
     })
 
 
-def _count(n: int) -> str:
-    return "one figure" if n == 1 else f"{n} figures"
+def withheld_notice(withheld) -> None:
+    """The one place the withhold message is written.
+
+    Used by both the live response and the chat-history replay. It was duplicated
+    across the two, which is exactly how the wording of a safety notice drifts
+    apart from itself.
+
+    **It does not print the withheld values.** An earlier version listed them
+    ("Withheld: 3600, 94.8") — which put the unverified numbers straight back in
+    front of the reader, who could simply take 3600 as the answer. A notice that
+    re-exposes what it suppressed is worse than no notice, because it looks like
+    a safeguard while defeating one. Disclose the fact and the count; never the
+    content.
+    """
+    if not withheld:
+        return
+
+    figures = "one figure" if len(withheld) == 1 else f"{len(withheld)} figures"
+    it = "it" if len(withheld) == 1 else "them"
+
+    st.warning(
+        f"**I couldn't verify {figures} against the computed data, so I've held "
+        f"{it} back.** Every number in this answer is checked against the tool "
+        "output before you see it; anything that can't be traced to a computed "
+        f"value is removed rather than shown. {figures.capitalize()} did not "
+        "trace, and {marker} marks where. The rest of the answer stands — expand "
+        "the tool calls above to see the real values it was checked against.".format(
+            marker=f"`{WITHHELD}`"
+        ),
+        icon="🛡️",
+    )
 
 
 def _render_tool_calls(calls) -> None:

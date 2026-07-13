@@ -180,3 +180,36 @@ def test_the_withheld_answer_is_still_a_usable_answer(fake, monkeypatch):
     assert "Do not trust it." in reply.text         # refusal survives
     assert "5200.4" not in reply.text               # only the figure is gone
     assert reply.withheld == ["5200.4"]
+
+
+# --- the notice must not leak what it suppressed ----------------------------
+
+def test_the_withhold_notice_never_prints_the_withheld_values(monkeypatch):
+    """Regression: the first version listed them ("Withheld: 3600, 94.8"), putting
+    the unverified numbers straight back in front of the reader — who could just
+    take 3600 as the answer. A notice that re-exposes what it suppressed looks like
+    a safeguard while defeating one."""
+    import src.ui.assistant_page as page
+
+    shown = []
+    monkeypatch.setattr(page.st, "warning", lambda msg, **kw: shown.append(msg))
+
+    page.withheld_notice(["3600", "94.8", "250"])
+
+    assert shown, "a notice must be shown"
+    message = shown[0]
+    for leaked in ("3600", "94.8", "250"):
+        assert leaked not in message, f"the notice leaked the withheld value {leaked}"
+
+    assert "3 figures" in message      # the COUNT is disclosed
+    assert "couldn't verify" in message
+    assert WITHHELD in message          # and where to look in the text
+
+
+def test_no_notice_when_nothing_was_withheld(monkeypatch):
+    import src.ui.assistant_page as page
+
+    shown = []
+    monkeypatch.setattr(page.st, "warning", lambda msg, **kw: shown.append(msg))
+    page.withheld_notice([])
+    assert not shown
