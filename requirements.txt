@@ -1,0 +1,7 @@
+# Streamlit Community Cloud installs from a requirements.txt at the repo root,
+# and streamlit_app.py lives here for the same reason.
+#
+# The real dependency list is backend/requirements.txt — the single source of
+# truth, shared with the FastAPI service. Do not duplicate it here; pip resolves
+# this path relative to this file.
+-r backend/requirements.txt

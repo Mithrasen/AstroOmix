@@ -1,0 +1,11 @@
+# Dark theme, matching the plotly_dark template the charts use. Without this,
+# Streamlit renders light while the figures render dark and the two fight.
+[theme]
+base = "dark"
+primaryColor = "#5aa9e6"
+backgroundColor = "#0b0e14"
+secondaryBackgroundColor = "#141922"
+textColor = "#e6e9ef"
+
+[browser]
+gatherUsageStats = false

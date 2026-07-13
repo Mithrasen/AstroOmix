@@ -1,4 +1,8 @@
-# API
+# UI
+streamlit
+plotly
+
+# API (the FastAPI service; the Streamlit app reuses its plain functions)
 fastapi
 uvicorn[standard]
 pyyaml
