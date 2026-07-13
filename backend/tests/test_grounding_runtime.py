@@ -213,3 +213,41 @@ def test_no_notice_when_nothing_was_withheld(monkeypatch):
     monkeypatch.setattr(page.st, "warning", lambda msg, **kw: shown.append(msg))
     page.withheld_notice([])
     assert not shown
+
+
+# --- the verifier is FINAL: the model may not argue with it ------------------
+
+def test_a_withheld_answer_shows_only_the_neutral_message(monkeypatch):
+    """The draft is where the arguing happens: it debates the check, claims its
+    answer "stands", and reprints the very figures that were withheld. So on
+    failure the draft is not rendered at all — one neutral message replaces it."""
+    import src.ui.assistant_embed as embed
+
+    shown = []
+    monkeypatch.setattr(embed.st, "warning", lambda m, **k: shown.append(("warn", m)))
+    monkeypatch.setattr(embed.st, "markdown", lambda m, **k: shown.append(("md", m)))
+
+    argumentative = (
+        "You're right — [withheld: unverified] was not a tool value, but 3520 is a "
+        "false positive of the substring matcher. The rest of my answer stands."
+    )
+    embed._render_answer(argumentative, ["3520"])
+
+    rendered = " ".join(m for _, m in shown)
+    assert "3520" not in rendered, "the withheld figure was reprinted"
+    assert WITHHELD not in rendered, "a [withheld] fragment leaked into prose"
+    assert "stands" not in rendered, "the model argued with the verifier"
+    assert "false positive" not in rendered, "verifier internals leaked"
+    assert "could not be matched reliably" in rendered
+    assert not any(kind == "md" for kind, _ in shown), "the draft must not be rendered"
+
+
+def test_a_clean_answer_is_still_rendered_normally(monkeypatch):
+    import src.ui.assistant_embed as embed
+
+    shown = []
+    monkeypatch.setattr(embed.st, "markdown", lambda m, **k: shown.append(m))
+    monkeypatch.setattr(embed.st, "warning", lambda m, **k: shown.append(m))
+
+    embed._render_answer("The value at day 197 was 3466.25.", [])
+    assert shown == ["The value at day 197 was 3466.25."]

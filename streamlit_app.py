@@ -60,8 +60,10 @@ from src.ui.assistant_embed import (  # noqa: E402
     FORECAST_CHIPS,
     METHODS_CHIPS,
     render_embedded,
+    render_popout,
 )
 from src.ui.home import render as render_home  # noqa: E402
+from src.ui.icons import logo  # noqa: E402
 from src.ui.theme import inject_theme  # noqa: E402
 from src.upload.analyse import ENGINES, run_de, run_forecast  # noqa: E402
 from src.upload.validate import (  # noqa: E402
@@ -182,28 +184,29 @@ def upload_abtest():
     with st.container(border=True):
         st.caption(
             f"Counts CSV: genes as rows (first column = gene ID), samples as columns. "
-            f"Limits: {MAX_COUNTS_BYTES // 1024 // 1024} MB, {MAX_GENES:,} genes, "
-            f"{MAX_SAMPLES} samples. Sample columns must carry `_FLT_` or `_GC_`, or "
-            "supply a design CSV (sample, group)."
+            f"Hosted-demo limits: {MAX_COUNTS_BYTES // 1024 // 1024} MB, "
+            f"{MAX_GENES:,} genes, {MAX_SAMPLES} samples. Sample columns must carry "
+            "`_FLT_` or `_GC_`, or supply a design CSV (sample, group)."
         )
 
-        # DESeq2 costs ~2.4 GB regardless of upload size — the cost is its worker
-        # pool, not the matrix — so it is gated exactly like ?refresh=true. The NB
-        # GLM stays flat at ~220 MB and is what the deployed app runs.
+        # The engine gate is unchanged — only what is SHOWN. The memory rationale
+        # and the dispersion methodology are implementation reasoning; they belong
+        # in Methods, not in the middle of someone's workflow.
         available = [
             key for key, engine in ENGINES.items()
             if not engine["requires_allow_refresh"] or allow_refresh()
         ]
-        engine = st.selectbox(
-            "Engine", available, format_func=lambda k: ENGINES[k]["label"],
-            key="ab_engine",
-        )
-        st.caption(ENGINES[engine]["note"])
-        if "deseq2" not in available:
+        engine = available[0]
+        if len(available) > 1:
+            engine = st.selectbox(
+                "Engine", available, format_func=lambda k: ENGINES[k]["label"],
+                key="ab_engine",
+            )
+
+        with st.expander("Advanced", expanded=False):
             st.caption(
-                "DESeq2 is unavailable here: it peaks at ~2.4 GB *regardless of how "
-                "small your upload is*, which would take the app down. Enable it "
-                "locally with `ALLOW_REFRESH=true`."
+                "Hosted uploads use a resource-safe NB-GLM; worked examples use "
+                "PyDESeq2. See Methods."
             )
 
         counts_file = st.file_uploader("Counts CSV", type=["csv"], key="ab_counts")
@@ -263,7 +266,6 @@ def upload_abtest():
                 "padj": st.column_config.NumberColumn("padj (FDR)", format="%.2e"),
             },
         )
-        st.caption(ENGINES[engine]["note"])
 
 
 def page_abtest():
@@ -272,6 +274,13 @@ def page_abtest():
     st.caption(
         "Flight versus ground control. Your counts are the primary path; the "
         "rodent spaceflight studies below are worked examples."
+    )
+
+    render_popout(
+        "de",
+        "Scoped to this comparison. It calls the same results you see below, and "
+        "every figure it states is verified against them before you see it.",
+        DE_CHIPS,
     )
 
     upload_abtest()
@@ -299,15 +308,6 @@ def page_abtest():
     chosen = st.session_state.get("de_example")
     if chosen:
         abtest_report(chosen, catalogue)
-
-    st.write("")
-    render_embedded(
-        "de",
-        "Scoped to differential expression. It calls the same DESeq2 results you "
-        "see above, and every figure it states is verified against them before you "
-        "see it.",
-        DE_CHIPS,
-    )
 
 
 def abtest_report(accession: str, catalogue: dict):
@@ -454,17 +454,13 @@ def upload_forecast():
         st.caption(
             f"CSV with a `day` and a `value` column (a group/crew column is ignored "
             f"for now). `day` must already be a numeric mission day, not a raw "
-            f"'L-92'/'R+1' label. Limits: {MAX_SERIES_BYTES // 1024} KB, minimum 3 "
-            "timepoints."
-        )
-        st.caption(
-            "An uncached forecast peaks at ~236 MB — inside budget — so this runs "
-            "the same three models the CBC page does, with no engine restriction."
+            f"'L-92'/'R+1' label. Hosted-demo limit: "
+            f"{MAX_SERIES_BYTES // 1024 // 1024} MB; minimum 3 timepoints."
         )
 
         series_file = st.file_uploader("Series CSV", type=["csv"], key="fc_series")
         extra_days = st.number_input(
-            "What-if: days past your last point",
+            "Exploratory horizon: days past your last point",
             min_value=0, max_value=365, value=30, step=1, key="fc_extra",
         )
 
@@ -504,10 +500,18 @@ def upload_forecast():
 
 def page_forecasting():
     """Upload first. The Inspiration4 panel is an EXAMPLE, revealed on click."""
-    st.header("Forecasting")
+    st.header("Longitudinal Analysis")
     st.caption(
-        "Mission-phase trajectories. Your time series is the primary path; the "
-        "Inspiration4 crew blood panel below is a worked example."
+        "How a marker moves across a mission. Your time series is the primary path; "
+        "the Inspiration4 crew blood panel below is a worked example."
+    )
+
+    render_popout(
+        "forecast",
+        "Scoped to this analysis. It reads the same fits and scores you see below, "
+        "and it will tell you when a model reconstructs the observed points well "
+        "but cannot forecast.",
+        FORECAST_CHIPS,
     )
 
     upload_forecast()
@@ -535,15 +539,6 @@ def page_forecasting():
     if st.session_state.get("fc_example"):
         forecast_report()
 
-    st.write("")
-    render_embedded(
-        "forecast",
-        "Scoped to forecasting. It calls the same Prophet/ARIMA/LightGBM fits and "
-        "LOO-CV scores, and it will tell you when a model wins the score but "
-        "cannot forecast.",
-        FORECAST_CHIPS,
-    )
-
 
 def forecast_report():
     """The built-in CBC report. Identical to what it always was."""
@@ -562,7 +557,7 @@ def forecast_report():
     with right:
         # Matches the API's le=365 bound.
         extra_days = st.number_input(
-            "What-if: days past last draw", min_value=0, max_value=365, value=30, step=1,
+            "Exploratory horizon: days past last draw", min_value=0, max_value=365, value=30, step=1,
         )
 
     with st.spinner("Fitting models…"):
@@ -601,7 +596,15 @@ def render_forecast(data: dict, extra_days: int):
     best = data["comparison"]["best_by_mae"]
     warning = data["comparison"].get("best_by_mae_warning")
 
-    st.markdown(f"**Best by MAE:** :{'red' if warning else 'green'}[{best}]")
+    label = {"lightgbm": "LightGBM", "prophet": "Prophet", "arima": "ARIMA"}.get(
+        best, str(best)
+    )
+    st.markdown(
+        f"**Lowest leave-one-out MAE:** :{'red' if warning else 'green'}[{label}]"
+    )
+    st.caption(
+        "This measures reconstruction of observed points, not forecasting ability."
+    )
 
     # The trap: LightGBM usually wins LOO and cannot extrapolate at all. This has
     # to be impossible to miss, so it sits directly under the callout.
@@ -618,11 +621,11 @@ def render_forecast(data: dict, extra_days: int):
     st.caption(
         f"LOO-CV holds out each of the {data['n_timepoints']} timepoints once and fits "
         "on the rest. It measures how well a model **interpolates** the observed "
-        "trajectory — it does **not** validate the what-if extrapolation below."
+        "trajectory — it does **not** validate the exploratory horizon below."
     )
 
     if data.get("whatif"):
-        st.subheader(f"What-if: {int(extra_days)} days past the last draw")
+        st.subheader(f"Exploratory horizon: {int(extra_days)} days past the last draw")
         columns = st.columns(len(data["whatif"]))
         for column, (model, scenario) in zip(columns, data["whatif"].items()):
             with column:
@@ -839,11 +842,11 @@ def goto(page: str) -> None:
 PAGES = {
     "Home": lambda: render_home(goto),
     "Differential Expression": page_abtest,
-    "Forecasting": page_forecasting,
+    "Longitudinal Analysis": page_forecasting,
     "Methods": page_methods,
 }
 
-NAV = ["Differential Expression", "Forecasting", "Methods"]
+NAV = ["Differential Expression", "Longitudinal Analysis", "Methods"]
 
 if "page" not in st.session_state:
     st.session_state["page"] = "Home"
@@ -853,11 +856,16 @@ if current not in PAGES:
     current = "Home"
 
 # --- header bar: wordmark left, nav right. No sidebar. --------------------
-st.markdown('<div class="navrow">', unsafe_allow_html=True)
-brand, spacer, *nav_slots = st.columns([2.4, 0.6] + [1.25] * len(NAV))
+brand, spacer, *nav_slots = st.columns([2.6, 0.4] + [1.3] * len(NAV))
 
 with brand:
-    if st.button("🛰️  AstroOmix", key="nav_home", width="stretch"):
+    # The logo is a mark, not a nav tab: bigger, left-aligned, with the icon.
+    st.markdown(
+        f'<div class="logo">{logo(34)}<span class="logo-text">'
+        f'Astro<span class="logo-omix">Omix</span></span></div>',
+        unsafe_allow_html=True,
+    )
+    if st.button("Home", key="nav_home"):
         goto("Home")
 
 for slot, name in zip(nav_slots, NAV):
@@ -869,8 +877,6 @@ for slot, name in zip(nav_slots, NAV):
             type="primary" if current == name else "secondary",
         ):
             goto(name)
-
-st.markdown("</div>", unsafe_allow_html=True)
 st.markdown('<div class="appbar"></div>', unsafe_allow_html=True)
 
 PAGES[current]()

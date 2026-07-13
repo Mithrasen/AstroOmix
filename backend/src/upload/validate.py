@@ -44,8 +44,8 @@ from src.forecast.common import check_training_frame
 
 # --- caps --------------------------------------------------------------------
 
-MAX_COUNTS_BYTES = 5 * 1024 * 1024      # 5 MB
-MAX_SERIES_BYTES = 100 * 1024           # 100 KB — a time series is tiny
+MAX_COUNTS_BYTES = 6 * 1024 * 1024      # 6 MB — matches the widget cap exactly
+MAX_SERIES_BYTES = 1 * 1024 * 1024      # 1 MB — a two-column series is tiny
 MAX_GENES = 30_000
 MAX_SAMPLES = 50
 MIN_TIMEPOINTS = 3                      # enforced by check_training_frame too
@@ -61,8 +61,8 @@ def _check_size(data: bytes, limit: int, what: str) -> None:
     if len(data) > limit:
         raise UploadError(
             f"{what} is {len(data) / 1024 / 1024:.1f} MB, over the "
-            f"{limit / 1024 / 1024:.1f} MB limit. "
-            "Uploads are capped so a run cannot exhaust the app's memory."
+            f"{limit / 1024 / 1024:.0f} MB hosted-demo limit. "
+            "This is a limit of the hosted demo, not of the biology."
         )
 
 

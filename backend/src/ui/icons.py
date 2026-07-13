@@ -69,6 +69,31 @@ def node(size: int = 30, color: str = ACCENT, pulse: bool = True) -> str:
 </svg>"""
 
 
+def logo(size: int = 34) -> str:
+    """The mark: an orbital path wrapped around a DNA helix.
+
+    Space AND genetics in one glyph — a satellite alone said "space" and nothing
+    about biology, which is half the product.
+    """
+    return f"""
+<svg class="motif" width="{size}" height="{size}" viewBox="0 0 44 44" fill="none"
+     aria-hidden="true">
+  <!-- orbital path, inclined behind the helix -->
+  <ellipse cx="22" cy="22" rx="19" ry="8.5" stroke="{ACCENT}" stroke-width="1.6"
+           stroke-opacity="0.75" transform="rotate(-28 22 22)"/>
+  <!-- the double helix at the centre -->
+  <path d="M16 8 C30 15, 16 22, 30 29 C16 33, 30 37, 16 39" stroke="{WARN}"
+        stroke-width="1.9" stroke-linecap="round"/>
+  <path d="M30 8 C16 15, 30 22, 16 29 C30 33, 16 37, 30 39" stroke="{WARN}"
+        stroke-width="1.9" stroke-linecap="round" stroke-opacity="0.8"/>
+  <line x1="18.5" y1="13" x2="27.5" y2="13" stroke="{WARN}" stroke-width="1.1" stroke-opacity="0.55"/>
+  <line x1="18.5" y1="22" x2="27.5" y2="22" stroke="{WARN}" stroke-width="1.1" stroke-opacity="0.55"/>
+  <line x1="18.5" y1="31" x2="27.5" y2="31" stroke="{WARN}" stroke-width="1.1" stroke-opacity="0.55"/>
+  <!-- the satellite on the orbit -->
+  <circle cx="39" cy="13.5" r="2.6" fill="{ACCENT}"/>
+</svg>"""
+
+
 def shield(size: int = 30, color: str = WARN) -> str:
     """A shield with a check — the grounding guard."""
     return f"""

@@ -78,8 +78,8 @@ def test_valid_series_upload_validates_and_runs():
 # --- size and shape caps -----------------------------------------------------
 
 def test_oversized_counts_file_is_rejected():
-    blob = b"x" * (6 * 1024 * 1024)
-    with pytest.raises(UploadError, match="over the .* MB limit"):
+    blob = b"x" * (7 * 1024 * 1024)   # over the 6 MB hosted-demo cap
+    with pytest.raises(UploadError, match="over the .* MB hosted-demo limit"):
         validate_counts(blob)
 
 
@@ -104,7 +104,7 @@ def test_too_many_samples_rejected():
 
 def test_oversized_series_rejected():
     with pytest.raises(UploadError, match="over the"):
-        validate_series(b"day,value\n" + b"1,2\n" * 40000)
+        validate_series(b"day,value\n" + b"1,2\n" * 300_000)   # >1 MB
 
 
 # --- malformed data: the EXISTING validators do the rejecting ---------------

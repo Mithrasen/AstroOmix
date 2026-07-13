@@ -60,7 +60,14 @@ html, body, [class*="css"], .stApp { font-family: var(--sans); }
 [data-testid="stAppDeployButton"],
 footer { display: none !important; }
 
-[data-testid="stHeader"], .stApp > header { background: transparent; }
+/* Streamlit's own header sits ON TOP of the page. Transparent, but it still
+   intercepts pointer events — which silently swallowed clicks on the header nav
+   directly beneath it. Its own controls are hidden, so nothing needs to receive
+   clicks here. */
+[data-testid="stHeader"], .stApp > header {
+  background: transparent;
+  pointer-events: none;
+}
 
 /* --- starfield -----------------------------------------------------------
    Three layered radial-gradient dot fields at different scales, drifting at
@@ -339,7 +346,7 @@ section[data-testid="stSidebar"],
 [data-testid="stSidebarCollapsedControl"],
 [data-testid="collapsedControl"] { display: none !important; }
 
-.block-container { padding-top: 1.2rem; max-width: 1240px; }
+.block-container { padding-top: 3.2rem; max-width: 1240px; }
 
 /* --- header bar ---------------------------------------------------------- */
 .appbar {
@@ -363,7 +370,7 @@ section[data-testid="stSidebar"],
 
 /* Streamlit buttons are the only clickable primitive available, so the nav is
    built from them and restyled to read as header links rather than buttons. */
-.navrow .stButton > button {
+[class*="st-key-nav_"] .stButton > button {
   background: transparent;
   border: 1px solid transparent;
   color: var(--muted);
@@ -373,14 +380,14 @@ section[data-testid="stSidebar"],
   transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
   box-shadow: none;
 }
-.navrow .stButton > button:hover {
+[class*="st-key-nav_"] .stButton > button:hover {
   color: var(--text);
   background: rgba(90,169,230,0.08);
   border-color: var(--border);
   transform: none;
   box-shadow: none;
 }
-.navrow .stButton > button[kind="primary"] {
+[class*="st-key-nav_"] .stButton > button[kind="primary"] {
   color: var(--accent);
   background: rgba(90,169,230,0.10);
   border-color: rgba(90,169,230,0.35);
@@ -417,7 +424,7 @@ section[data-testid="stSidebar"],
   font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase;
   color: var(--muted); font-weight: 600; margin: 4px 0 8px;
 }
-.chiprow .stButton > button {
+[class*="st-key-chip_"] .stButton > button {
   background: rgba(90,169,230,0.06);
   border: 1px solid var(--border);
   color: var(--text);
@@ -426,7 +433,7 @@ section[data-testid="stSidebar"],
   padding: 10px 13px; border-radius: 999px;
   white-space: normal; height: auto; min-height: 44px;
 }
-.chiprow .stButton > button:hover {
+[class*="st-key-chip_"] .stButton > button:hover {
   border-color: var(--accent);
   background: rgba(90,169,230,0.12);
   box-shadow: 0 0 16px rgba(90,169,230,0.14);
@@ -442,6 +449,91 @@ section[data-testid="stSidebar"],
 
 /* --- loading state ------------------------------------------------------- */
 [data-testid="stSpinner"] { color: var(--accent); font-size: 13.5px; }
+
+/* --- logo: a MARK, not a nav tab ----------------------------------------- */
+.logo { display: flex; align-items: center; gap: 10px; padding-top: 2px; }
+.logo-text {
+  font-family: var(--display);
+  font-size: 25px; font-weight: 700; letter-spacing: -0.02em;
+  color: var(--text); line-height: 1;
+}
+.logo-omix { color: var(--accent); }
+
+/* The "Home" affordance under the mark is a quiet text link, not a button —
+   the mark itself must not read as one more nav tab. */
+.st-key-nav_home .stButton > button {
+  background: transparent; border: none; box-shadow: none;
+  color: var(--muted); font-size: 11.5px; font-weight: 500;
+  padding: 0 0 0 44px; margin-top: -6px;
+  text-align: left;
+}
+.st-key-nav_home .stButton > button:hover {
+  color: var(--accent); background: transparent; transform: none; box-shadow: none;
+}
+
+/* Nav items get the accent so they read as navigation, distinct from the mark. */
+[class*="st-key-nav_"] .stButton > button {
+  color: var(--accent);
+  border: 1px solid rgba(90,169,230,0.22);
+  background: rgba(90,169,230,0.05);
+}
+[class*="st-key-nav_"] .stButton > button:hover {
+  background: rgba(90,169,230,0.14);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+[class*="st-key-nav_"] .stButton > button[kind="primary"] {
+  background: rgba(90,169,230,0.18);
+  border-color: var(--accent);
+  color: #d6ecff;
+}
+
+/* nav_home also matches [class*="st-key-nav_"], so quiet it back down. */
+.st-key-nav_home .stButton > button,
+.st-key-nav_home .stButton > button:hover {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: var(--muted);
+  font-size: 11.5px; font-weight: 500;
+  padding: 0 0 0 44px; margin-top: -6px; text-align: left;
+}
+.st-key-nav_home .stButton > button:hover { color: var(--accent); }
+
+/* --- landing: two workflows, side by side -------------------------------- */
+.wf {
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--accent);
+  border-radius: 12px;
+  padding: 18px 20px 14px;
+  background: var(--panel);
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  min-height: 132px;
+}
+.wf:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+  box-shadow: 0 0 22px rgba(90,169,230,0.14);
+}
+.wf h3 {
+  font-family: var(--display);
+  font-size: 18px; font-weight: 700; margin: 8px 0 6px; color: var(--text);
+}
+.wf p { margin: 0; font-size: 13px; line-height: 1.6; color: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) { .wf:hover { transform: none; } }
+
+/* --- assistant pop-out ---------------------------------------------------- */
+[data-testid="stPopover"] > button {
+  border: 1px solid rgba(90,169,230,0.35) !important;
+  background: rgba(90,169,230,0.08) !important;
+  color: var(--accent) !important;
+  font-weight: 600 !important;
+}
+[data-testid="stPopover"] > button:hover {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 18px rgba(90,169,230,0.18) !important;
+}
 """
 
 

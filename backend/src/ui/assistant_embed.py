@@ -17,16 +17,52 @@ import streamlit as st
 
 from src.agent.agent import KeyNotConfigured, ask
 from src.agent.keys import NOT_CONFIGURED_MESSAGE, resolve_api_key
-from src.ui.assistant_page import _render_tool_calls, withheld_notice
+from src.ui.assistant_page import _render_tool_calls
 from src.ui.icons import orbit
+
+# The verifier is FINAL. When it withholds, the model's own draft is not shown at
+# all — because the draft is exactly where the arguing happens: it debates the
+# check, insists its answer "stands", and reprints the very numbers that were
+# withheld, which defeats the withholding. So on failure the prose is dropped and
+# this replaces it. Nothing about the guard's logic changes; only what is drawn.
+WITHHELD_MESSAGE = (
+    "Some numerical statements could not be matched reliably to the analysis "
+    "output, so the answer was withheld. You can inspect the verified result "
+    "table below or ask again."
+)
+
+
+def _render_answer(text: str, withheld) -> None:
+    """Draw an answer — or, if the verifier withheld anything, only the notice.
+
+    Never renders the draft when `withheld` is non-empty. A partially-redacted
+    draft still leaks: the surrounding sentences restate the suppressed figure in
+    words, and the model's rebuttal of the verifier reads as though the check were
+    wrong. One neutral message is the whole output.
+    """
+    if withheld:
+        st.warning(WITHHELD_MESSAGE, icon="🛡️")
+        return
+    st.markdown(text)
+
+
+def render_popout(scope: str, blurb: str, chips: list[str]) -> None:
+    """The assistant as a pop-out panel, placed at the top of a page.
+
+    A `st.popover`, not a `st.dialog`: verified that a popover survives the rerun
+    a widget click causes and keeps its state, whereas a modal that closed on
+    every rerun would kill the agent mid-run.
+    """
+    with st.popover("🛰️  Research Assistant", width="stretch"):
+        render_embedded(scope, blurb, chips)
 
 
 def render_embedded(scope: str, blurb: str, chips: list[str]) -> None:
     """Draw the assistant for one tab.
 
     `scope` namespaces the widget keys and the transcript. `chips` are the
-    clickable example questions for this tab — they fire the identical `ask()`
-    path a typed question does.
+    clickable example questions — they fire the identical `ask()` path a typed
+    question does.
     """
     st.markdown(
         f'<div class="mc-rule">{orbit(22)}<strong>Research Assistant</strong></div>',
@@ -41,19 +77,21 @@ def render_embedded(scope: str, blurb: str, chips: list[str]) -> None:
     st.caption(blurb)
 
     log_key = f"chat_{scope}"
-    pending_key = f"pending_{scope}"
     if log_key not in st.session_state:
         st.session_state[log_key] = []
 
+    question = None
+
     # --- example question chips ---------------------------------------------
+    # Handled in-run rather than via st.rerun(): a rerun from inside the popover
+    # is survivable, but not needing one is simpler and cannot close the panel.
     st.markdown('<div class="chips-label">Try one of these</div>',
                 unsafe_allow_html=True)
     columns = st.columns(len(chips))
     for index, (column, chip) in enumerate(zip(columns, chips)):
         with column:
             if st.button(chip, key=f"chip_{scope}_{index}", width="stretch"):
-                st.session_state[pending_key] = chip
-                st.rerun()
+                question = chip
 
     # --- free text -----------------------------------------------------------
     with st.form(key=f"form_{scope}", clear_on_submit=True, border=False):
@@ -69,7 +107,6 @@ def render_embedded(scope: str, blurb: str, chips: list[str]) -> None:
             submitted = st.form_submit_button("Ask", width="stretch",
                                               type="primary")
 
-    question = st.session_state.pop(pending_key, None)
     if submitted and typed.strip():
         question = typed.strip()
 
@@ -78,8 +115,9 @@ def render_embedded(scope: str, blurb: str, chips: list[str]) -> None:
         with st.chat_message(entry["role"]):
             if entry["role"] == "assistant":
                 _render_tool_calls(entry.get("tool_calls", []))
-                withheld_notice(entry.get("withheld"))
-            st.markdown(entry["text"])
+                _render_answer(entry["text"], entry.get("withheld"))
+            else:
+                st.markdown(entry["text"])
 
     if not question:
         return
@@ -103,9 +141,7 @@ def render_embedded(scope: str, blurb: str, chips: list[str]) -> None:
                 return
 
         _render_tool_calls(reply.tool_calls)
-        # The runtime guard already redacted anything it could not trace. Say so.
-        withheld_notice(reply.withheld)
-        st.markdown(reply.text)
+        _render_answer(reply.text, reply.withheld)
 
         if reply.stopped_early:
             st.warning("Stopped at the tool-call limit.", icon="⚠️")
@@ -123,20 +159,23 @@ def render_embedded(scope: str, blurb: str, chips: list[str]) -> None:
 
 # The example questions per tab. Each set includes a METHOD question, because
 # "why this model" is the thing a reviewer actually wants to interrogate.
+# Science questions, not implementation questions. A researcher wants to know what
+# the data says; the "why this engine" reasoning belongs in Methods.
 DE_CHIPS = [
-    "What are the top differentially expressed genes in soleus?",
-    "Why does this use DESeq2 instead of the built-in NB-GLM model?",
-    "Which genes are most robust vs. weakest evidence?",
+    "Which genes show the strongest evidence of change?",
+    "How should I interpret the direction of log2 fold change?",
+    "What are the main limitations of this comparison?",
 ]
 
 FORECAST_CHIPS = [
     "Should I trust LightGBM's day-300 prediction for neutrophils?",
-    "Why leave-one-out cross-validation instead of a train/test split?",
-    "Is ARIMA or Prophet better for hemoglobin, and why?",
+    "Which blood markers changed most across the mission?",
+    "What are the main limitations of this analysis?",
 ]
 
+# Methods is where implementation reasoning belongs, so it keeps those.
 METHODS_CHIPS = [
     "Why pydeseq2 rather than R DESeq2 for the deployed app?",
     "How does the runtime grounding guard work?",
-    "Why is the n=3 forecast blocked?",
+    "Why is a 3-timepoint analysis blocked?",
 ]
