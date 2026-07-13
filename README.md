@@ -1,86 +1,129 @@
 # AstroOmix
 
-Space-biology platform. Rodent spaceflight A/B testing (flight vs. ground) and
-Inspiration4 human molecular trajectories, over real NASA OSDR data.
+**Live demo:** _<!-- TODO: paste the Streamlit Cloud URL here -->_
+
+AstroOmix is a research web app for analysing space-biology data. It runs two
+workflows over real NASA datasets — bulk RNA-seq differential expression (rodent
+spaceflight vs. matched ground control) and longitudinal modelling of human
+biosignals across a mission — and pairs them with an AI research assistant that is
+constrained to the computed results. The assistant has no independent knowledge of
+these datasets: it calls the same analysis code the pages run, every tool call it
+makes is shown to you, and **every figure in its answers is verified against the
+actual tool output before you see it.** Anything that cannot be traced is withheld
+rather than shown. It also retrieves real published papers from PubMed — retrieval
+only, displayed with their abstracts for you to judge, never presented as validation
+of a result.
+
+Space-biology datasets are small, heterogeneous, and easy to overinterpret. The
+point of this project is not to squeeze more confidence out of them than they can
+support; it is to make the limits of the data visible while the analysis is being
+read.
+
+## What it does
+
+| Workflow | What it is |
+|---|---|
+| Differential expression | Flight vs. ground control on bulk RNA-seq. PyDESeq2 for the worked examples; a resource-safe NB-GLM for uploaded data. Benjamini–Hochberg FDR. |
+| Longitudinal analysis | Prophet / ARIMA / LightGBM compared by leave-one-out CV on a repeated-measures blood panel. Illustrative comparison, not a model recommendation. |
+| Research assistant | Tool-based, runtime-verified, able to abstain. Requires an Anthropic API key. |
+| Literature retrieval | Real PubMed records via NCBI E-utilities, with abstracts shown. Retrieval, not validation. |
+
+Honesty is enforced in code, not just claimed in copy:
+
+* **Numbers are verified at runtime.** Every figure in an assistant answer must
+  trace to a tool result, a difference between two tool results, or a structural
+  constant. Everything else is withheld — in the deployed app, on every response,
+  not only in the test suite.
+* **Citations are verified the same way.** A PMID that no literature tool returned
+  is withheld exactly as a fabricated number is.
+* **Retrieval is never dressed as validation.** "Computation: verified" and
+  "Literature: retrieved" are two separate badges and are never merged into one.
+* **Thin data is flagged, not modelled around.** The longitudinal panel has seven
+  timepoints; the app says so, and says what that does and does not support.
+
+Read [docs/METHODS.md](docs/METHODS.md) for the methods and their limitations.
+
+## Run it locally
+
+Requires Python 3.12.
+
+```bash
+git clone https://github.com/<your-org>/AstroOmix.git
+cd AstroOmix
+pip install -r requirements.txt
+streamlit run streamlit_app.py
+```
+
+The two analysis workflows run without any API key — the pre-warmed caches in
+`backend/data/cache/` mean DESeq2 and the forecast fits do not have to run on first
+load.
+
+### The AI assistant needs an Anthropic API key
+
+Without one, the analysis pages work normally and the assistant shows a "not
+configured" notice instead of failing. To enable it, create a `.env` file in the
+repo root:
+
+```
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+`.env` is git-ignored. The key is **never** read from the ambient environment —
+only from `.env` locally, or from Streamlit secrets when deployed. Get a key at
+[console.anthropic.com](https://console.anthropic.com/).
+
+## Deploying to Streamlit Community Cloud
+
+`streamlit_app.py` and `requirements.txt` are at the repo root, which is where
+Cloud looks for them. After pointing Cloud at the repo, add the key under
+**App settings → Secrets**:
+
+```toml
+ANTHROPIC_API_KEY = "sk-ant-..."
+```
+
+Key resolution is `st.secrets` → `.env` → not configured, so the same code works
+deployed and locally.
+
+## Data
+
+Real NASA Open Science Data Repository studies — rodent spaceflight muscle
+(OSD-104 soleus, OSD-105 tibialis anterior; 6 flight vs. 6 ground) and the
+Inspiration4 civilian mission blood panel (4 crew, 7 timepoints). Mouse–human
+orthology comes from MGI. Nothing is simulated, and no per-astronaut clinical
+measure is stubbed in where the public data does not have one.
+
+[docs/DATA_NOTES.md](docs/DATA_NOTES.md) is worth reading before you add a dataset:
+several plausible-looking accessions do not contain what their titles suggest.
 
 ## Layout
 
-    backend/     FastAPI + analysis code (deploys to Render)
-      main.py            app, CORS, gzip
-      routers/           /api/studies, /api/abtest/{accession}
-      src/data/          OSDR loaders, mission-day axis
-      src/abtest/        preprocess, DESeq2 (served), NB GLM (cross-check)
-      config/            datasets.yaml
-    frontend/    Vite + React (deploys to Vercel)
-    docs/        DATA_NOTES.md — what the archive actually contains
+```
+streamlit_app.py        the app (Streamlit Cloud entry point)
+requirements.txt        -> backend/requirements.txt
+backend/
+  src/data/             OSDR loaders, mission-day axis
+  src/abtest/           preprocessing, DESeq2, NB-GLM cross-check
+  src/forecast/         Prophet / ARIMA / LightGBM, LOO-CV, reliability tiers
+  src/integrate/        MGI mouse-human orthology (bipartite, cardinality-aware)
+  src/literature/       PubMed retrieval via NCBI E-utilities
+  src/agent/            the assistant: tools, key resolution, grounding guard
+  src/ui/               theme, cards, the embedded assistant
+  routers/              HTTP handlers; the app imports their plain functions
+  tests/                189 tests
+docs/                   METHODS.md, DATA_NOTES.md
+```
 
-## Run locally
+`backend/data/cache/` is committed on purpose and is load-bearing: it is what keeps
+a 2.4 GB DESeq2 run from ever happening on a hosted dyno.
 
-Backend (from `backend/`):
+## Limitations
 
-    pip install -r requirements.txt
-    uvicorn main:app --reload --port 8000
-    # docs: http://localhost:8000/docs
+Spaceflight cohorts are tiny, so results here are descriptive and
+hypothesis-generating. Nothing in this app is diagnostic or a basis for a health
+decision. Cross-species links are evidence for a human to weigh, not a statistical
+result. Retrieved literature is a search result, not proof of anything.
 
-Frontend (from `frontend/`):
+## Licence
 
-    npm install
-    npm run dev        # http://localhost:5173
-
-The frontend calls the backend cross-origin in dev exactly as it will in prod
-(`VITE_API_URL` in `.env.development`). There is deliberately **no dev proxy** —
-see the comment in `vite.config.js`.
-
-## Endpoints
-
-| Endpoint | What it does |
-|---|---|
-| `GET /api/health` | liveness |
-| `GET /api/studies` | dataset catalogue from `config/datasets.yaml` |
-| `GET /api/abtest/{accession}` | DESeq2 flight-vs-ground; `OSD-104`, `OSD-105` |
-
-`/api/abtest` runs real DESeq2 (~15s cold) and caches the table to
-`backend/data/cache/de/`, so repeat calls return in under a second. Pass
-`?refresh=true` to re-run.
-
-## Environment
-
-| Variable | Default | Meaning |
-|---|---|---|
-| `ALLOW_REFRESH` | `false` | Permits `?refresh=true` on `/api/abtest` and `/api/integrate`. |
-
-**Do not set `ALLOW_REFRESH` on Render.** It defaults closed, and that default is a
-safety limit rather than a preference: an uncached DESeq2 run peaks at **~2.4 GB**
-of unique memory across ~18 worker processes, against a 512 MB free-tier cap. A
-single `?refresh=true` in production does not make one request slow — it
-OOM-kills the dyno and takes every endpoint down with it. Blocked requests return
-**403**, never a silently-stale 200.
-
-Locally, open the gate with a shell variable or a line in `.env`:
-
-    ALLOW_REFRESH=true uvicorn main:app --reload --port 8000
-
-(`src/env.py` deliberately never writes into `os.environ`, so `src/settings.py`
-checks the shell first and then falls back to reading `.env` directly.)
-
-`?refresh=true` on `/api/forecast` is deliberately **not** gated — an uncached
-forecast peaks at ~236 MB, comfortably inside budget.
-
-## Before deploying
-
-* **Lock down CORS.** `main.py` allows `*`. Replace with the Vercel origin.
-* Set `VITE_API_URL` on Vercel to the Render backend URL.
-* Leave `ALLOW_REFRESH` unset (see above).
-* The pre-warmed caches in `backend/data/cache/{de,forecast,integrate}/` are
-  committed and are **load-bearing, not just a latency win** — they are what keeps
-  DESeq2 from ever running in production. Do not delete them.
-* Render free-tier dynos sleep; the first request after idle pays dyno wake-up.
-
-## Status
-
-Working end to end: Study Explorer, A/B Testing (volcano + sortable hits table),
-Methods. Forecasting and Integration are honest placeholders — the endpoints do
-not exist yet, and mocked charts would be worse than empty pages.
-
-Read `docs/DATA_NOTES.md` before adding datasets. Several plausible-looking
-accessions do not contain what their titles suggest.
+MIT.

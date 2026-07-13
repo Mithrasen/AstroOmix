@@ -1,8 +1,26 @@
 .venv/
-.env
 __pycache__/
 *.pyc
 .pytest_cache/
+*.log
+
+# --- Secrets ------------------------------------------------------------------
+# This repo is public. Everything that could hold a credential is ignored by
+# pattern rather than by name, because the file that leaks a key is always the one
+# nobody thought to list.
+#
+# .streamlit/secrets.toml is the dangerous one: it is exactly where Streamlit's
+# own docs tell you to put an API key for local development, it sits inside a
+# directory we DO commit (config.toml lives there), and it is not called ".env".
+.env
+.env.*
+!.env.example
+secrets.toml
+.streamlit/secrets.toml
+*.key
+*.pem
+*.p12
+credentials.json
 
 # --- Backend cache -----------------------------------------------------------
 # The cache holds two very different kinds of file, and only one kind belongs in
