@@ -4,8 +4,30 @@ __pycache__/
 *.pyc
 .pytest_cache/
 
-# Backend: downloaded archive data and derived DE tables. Both regenerable.
-backend/data/cache/
+# --- Backend cache -----------------------------------------------------------
+# The cache holds two very different kinds of file, and only one kind belongs in
+# git:
+#
+#   * RAW ARCHIVE DOWNLOADS (ignored) — re-fetchable from NASA OSDR. These are
+#     large: the Inspiration4 counts .xlsx alone is 123 MB, which is over
+#     GitHub's 100 MB hard limit and would make the push fail outright.
+#
+#   * DERIVED RESULTS (committed) — DESeq2 tables, forecast fits, ortholog
+#     tables. ~4.7 MB total, and expensive to recompute: a cold /api/abtest is a
+#     ~16s DESeq2 run. Committing them means a judge's first request on every
+#     page is served warm instead of paying that on a sleeping free-tier dyno.
+#
+# So: ignore the cache's contents, then carve out the derived results.
+backend/data/cache/*
+!backend/data/cache/de/
+!backend/data/cache/forecast/
+!backend/data/cache/integrate/
+
+# The I4 complete-blood-count CSV (9 KB). GET /api/forecast (the analyte
+# allowlist that populates the dropdown) is not itself cached and parses this
+# file, so without it that first request makes a live call to OSDR.
+!backend/data/cache/OSD-569__file__36bc5a6eb813.csv
+
 backend/results/
 
 # Frontend
