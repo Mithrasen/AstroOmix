@@ -33,7 +33,6 @@ import warnings
 
 import numpy as np
 import pandas as pd
-from statsmodels.tsa.statespace.sarimax import SARIMAX
 
 from src.forecast.common import DAY, VALUE, ForecastModel, check_training_frame
 
@@ -51,6 +50,11 @@ class ArimaModel(ForecastModel):
         self._sd = np.nan
 
     def fit(self, df: pd.DataFrame) -> None:
+        # Imported here, not at module scope: statsmodels is ~40MB of RSS and is
+        # only needed once a model is actually fitted. Cached forecast responses
+        # never reach this line.
+        from statsmodels.tsa.statespace.sarimax import SARIMAX
+
         clean = check_training_frame(df)
         y = clean[VALUE].to_numpy(dtype=float)
         exog = clean[[DAY]].to_numpy(dtype=float)

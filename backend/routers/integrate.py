@@ -17,6 +17,7 @@ from fastapi import APIRouter, HTTPException, Query
 from routers.studies import load_studies
 from src.data.loaders import CACHE_DIR
 from src.integrate.cross_reference import cross_reference
+from src.refresh_guard import enforce_refresh_allowed
 
 router = APIRouter(prefix="/api/integrate", tags=["integrate"])
 
@@ -47,8 +48,15 @@ def integrate(
     fdr: float = Query(0.05, gt=0, le=1, description="FDR cutoff for DE significance."),
     limit: int = Query(500, ge=1, le=5000,
                        description="Cap on genes returned, ranked by FDR."),
-    refresh: bool = Query(False),
+    refresh: bool = Query(
+        False,
+        description="Bypass the cache. Requires ALLOW_REFRESH=true; 403 otherwise. "
+                    "This route calls DESeq2 underneath, so an uncached run carries "
+                    "the same ~2.4 GB OOM risk as /api/abtest.",
+    ),
 ) -> dict:
+    enforce_refresh_allowed(refresh)
+
     allowed = _abtest_accessions()
     if accession not in allowed:
         raise HTTPException(

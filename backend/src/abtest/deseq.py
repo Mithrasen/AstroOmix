@@ -25,8 +25,6 @@ the project (and the frontend) already expects.
 from __future__ import annotations
 
 import pandas as pd
-from pydeseq2.dds import DeseqDataSet
-from pydeseq2.ds import DeseqStats
 
 from src.abtest.preprocess import round_expected_counts
 from src.abtest.rnaseq import assign_groups
@@ -48,6 +46,15 @@ def run_deseq2(accession: str, min_total_count: int = MIN_TOTAL_COUNT,
     Rounding is applied unconditionally: RSEM emits fractional expected counts
     and DESeq2's NB model requires integers.
     """
+    # Imported here, not at module scope: pydeseq2 pulls in anndata/scanpy and
+    # costs ~100MB of RSS. Most requests are served from the cached DESeq2 table
+    # and never call this function, so on a memory-capped free-tier dyno there is
+    # no reason to pay for it at boot. A failure here now surfaces as a slow or
+    # failing first uncached request rather than a startup crash — a much easier
+    # thing to diagnose.
+    from pydeseq2.dds import DeseqDataSet
+    from pydeseq2.ds import DeseqStats
+
     counts = round_expected_counts(fetch_counts(accession))
     groups = assign_groups(counts.columns)
 

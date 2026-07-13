@@ -25,3 +25,4 @@ anthropic
 
 # Dev
 pytest
+httpx           # fastapi.testclient depends on it

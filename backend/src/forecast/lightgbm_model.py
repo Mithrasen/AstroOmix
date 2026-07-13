@@ -32,7 +32,6 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-from lightgbm import LGBMRegressor
 
 from src.forecast.common import DAY, VALUE, ForecastModel, check_training_frame, mission_phase
 
@@ -56,6 +55,10 @@ class LightGBMModel(ForecastModel):
         self._max_training_day: float = np.nan
 
     def fit(self, df: pd.DataFrame) -> None:
+        # Imported here, not at module scope: LightGBM loads a native binary and
+        # is only needed once a model is actually fitted.
+        from lightgbm import LGBMRegressor
+
         clean = check_training_frame(df)
         features = build_features(clean[DAY].to_numpy())
         target = clean[VALUE].to_numpy(dtype=float)

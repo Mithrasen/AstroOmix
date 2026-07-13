@@ -15,7 +15,6 @@ import logging
 from datetime import date, timedelta
 
 import pandas as pd
-from prophet import Prophet
 
 from src.forecast.common import DAY, VALUE, ForecastModel, check_training_frame
 
@@ -40,6 +39,18 @@ class ProphetModel(ForecastModel):
         self._model: Prophet | None = None
 
     def fit(self, df: pd.DataFrame) -> None:
+        # Imported here, not at module scope. Prophet is the heaviest dependency
+        # in the project: it drags in cmdstanpy, which on first use may have to
+        # locate — or compile — a Stan binary.
+        #
+        # That is exactly why this belongs in fit(). At module scope, a missing or
+        # uncompiled Stan backend on Render takes down the whole app at boot, and
+        # every endpoint 502s with a stack trace that has nothing to do with the
+        # endpoint being called. Deferred to first use, the same failure shows up
+        # as one slow (or failing) forecast request, with the rest of the API up
+        # and serving. A localised failure beats a total one.
+        from prophet import Prophet
+
         clean = check_training_frame(df)
         training = pd.DataFrame({
             "ds": clean[DAY].map(_to_date),

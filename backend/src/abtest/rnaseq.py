@@ -38,11 +38,17 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-import statsmodels.api as sm
-from statsmodels.stats.multitest import multipletests
 
 from src.abtest.preprocess import round_expected_counts
 from src.data.loaders import fetch_counts
+
+# statsmodels is imported lazily, inside the two functions that use it.
+#
+# It is not obvious why this matters, so: `deseq.py` imports `assign_groups` from
+# this module — a pure function that needs no statsmodels at all. But a top-level
+# `import statsmodels.api` here executes on that import, so statsmodels was being
+# loaded at web-server boot (~40MB) purely to get a name that never touches it.
+# Nothing in the API serves this module's NB GLM; it is the offline cross-check.
 
 FLIGHT_TOKEN = "_FLT_"
 GROUND_TOKEN = "_GC_"
@@ -159,6 +165,8 @@ def estimate_dispersions(counts: pd.DataFrame, groups: pd.Series,
 def _fit_gene(y: np.ndarray, design: np.ndarray, offset: np.ndarray,
               alpha: float) -> tuple:
     """Fit one gene. Returns (log2fc, pvalue) or NaNs if the fit fails."""
+    import statsmodels.api as sm
+
     if y.mean() <= 0:
         return np.nan, np.nan
 
@@ -189,6 +197,9 @@ def differential_expression(counts: pd.DataFrame, min_count: int = 10,
     Returns a table indexed by gene, sorted by FDR, with columns:
         base_mean, log2fc, pvalue, padj, dispersion, n_flight, n_ground
     """
+    import statsmodels.api as sm
+    from statsmodels.stats.multitest import multipletests
+
     counts = round_expected_counts(counts)  # required, not optional
     groups = assign_groups(counts.columns)
 

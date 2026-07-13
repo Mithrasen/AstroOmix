@@ -15,6 +15,7 @@ from fastapi import APIRouter, HTTPException, Query
 from routers.studies import load_studies
 from src.abtest.deseq import run_deseq2
 from src.data.loaders import CACHE_DIR
+from src.refresh_guard import enforce_refresh_allowed
 
 router = APIRouter(prefix="/api/abtest", tags=["abtest"])
 
@@ -83,13 +84,21 @@ def _to_records(results: pd.DataFrame) -> list[dict]:
 @router.get("/{accession}")
 def abtest(
     accession: str,
-    refresh: bool = Query(False, description="Bypass the cache and re-run DESeq2."),
+    refresh: bool = Query(
+        False,
+        description="Bypass the cache and re-run DESeq2. Requires ALLOW_REFRESH=true; "
+                    "403 otherwise, because an uncached run would OOM the dyno.",
+    ),
 ) -> dict:
     """Flight-vs-ground DESeq2 results for one rodent accession.
 
     Returns every tested gene — the volcano plot needs the full cloud, not just
     the significant hits.
     """
+    # Before anything else: a cache-bypassing request is the one input that can
+    # take the service down.
+    enforce_refresh_allowed(refresh)
+
     allowed = _abtest_accessions()
     if accession not in allowed:
         raise HTTPException(
