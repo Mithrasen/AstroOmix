@@ -55,6 +55,20 @@ from src.ui.components import (  # noqa: E402
     mission_timeline,
 )
 from src.ui.theme import inject_theme  # noqa: E402
+from src.upload.analyse import ENGINES, run_de, run_forecast  # noqa: E402
+from src.upload.validate import (  # noqa: E402
+    MAX_COUNTS_BYTES,
+    MAX_GENES,
+    MAX_RUNS_PER_SESSION,
+    MAX_SAMPLES,
+    MAX_SERIES_BYTES,
+    UploadError,
+    check_rate_limit,
+    record_run,
+    validate_counts,
+    validate_design,
+    validate_series,
+)
 
 st.set_page_config(
     page_title="AstroOmix",
@@ -137,6 +151,103 @@ def page_study_explorer():
         width="stretch",
         hide_index=True,
     )
+
+
+UPLOAD_BANNER = (
+    "**You are viewing results from your own uploaded data.** This has not been "
+    "validated the way OSD-104 / OSD-105 have — nobody has checked that the counts "
+    "mean what you think they mean, that the design is correct, or that the result "
+    "is biologically sensible. Results are **not cached** and are not saved."
+)
+
+
+def upload_abtest():
+    """'Upload your own data' — additive. The OSD-104/105 flow above is untouched."""
+    with st.expander("📤 Upload your own data", expanded=False):
+        st.caption(
+            f"Counts CSV: genes as rows (first column = gene ID), samples as columns. "
+            f"Limits: {MAX_COUNTS_BYTES // 1024 // 1024} MB, {MAX_GENES:,} genes, "
+            f"{MAX_SAMPLES} samples. Sample columns must carry `_FLT_` or `_GC_`, or "
+            "supply a design CSV (sample, group)."
+        )
+
+        # DESeq2 costs ~2.4 GB regardless of upload size — the cost is its worker
+        # pool, not the matrix — so it is gated exactly like ?refresh=true. The NB
+        # GLM stays flat at ~220 MB and is what the deployed app runs.
+        available = [
+            key for key, engine in ENGINES.items()
+            if not engine["requires_allow_refresh"] or allow_refresh()
+        ]
+        engine = st.selectbox(
+            "Engine", available, format_func=lambda k: ENGINES[k]["label"],
+            key="ab_engine",
+        )
+        st.caption(ENGINES[engine]["note"])
+        if "deseq2" not in available:
+            st.caption(
+                "DESeq2 is unavailable here: it peaks at ~2.4 GB *regardless of how "
+                "small your upload is*, which would take the app down. Enable it "
+                "locally with `ALLOW_REFRESH=true`."
+            )
+
+        counts_file = st.file_uploader("Counts CSV", type=["csv"], key="ab_counts")
+        design_file = st.file_uploader(
+            "Design CSV (optional — only if sample names lack _FLT_/_GC_)",
+            type=["csv"], key="ab_design",
+        )
+
+        used = st.session_state.get("ab_runs", 0)
+        st.caption(f"Runs used this session: {used} / {MAX_RUNS_PER_SESSION}")
+
+        if not st.button("Run differential expression", key="ab_run"):
+            return
+        if counts_file is None:
+            st.error("Upload a counts CSV first.")
+            return
+
+        try:
+            check_rate_limit(st.session_state, "ab_runs")
+            counts, groups = validate_counts(counts_file.getvalue())
+            if design_file is not None:
+                groups = validate_design(design_file.getvalue(), counts)
+        except UploadError as error:
+            # Surfaced verbatim — the validators' messages are the real diagnosis.
+            st.error(str(error))
+            return
+
+        record_run(st.session_state, "ab_runs")
+
+        with st.spinner(f"Running {ENGINES[engine]['label']} on your data…"):
+            try:
+                results = run_de(counts, engine=engine)
+            except Exception as error:
+                st.error(f"The analysis failed on your data: {error}")
+                return
+
+        st.warning(UPLOAD_BANNER, icon="⚠️")
+
+        n_significant = int((results["padj"] < 0.05).sum())
+        animated_counters([
+            {"label": "Genes tested", "value": int(results["pvalue"].notna().sum())},
+            {"label": "FDR < 0.05", "value": n_significant, "color": "#4ec9a0"},
+            {"label": "Engine", "text": ENGINES[engine]["label"], "color": "#d8b968"},
+        ])
+
+        # The uploaded matrix's index name comes from the user's CSV header, so
+        # normalise it rather than guessing what they called it.
+        display = results.rename_axis("gene").reset_index()
+        st.plotly_chart(volcano(display), width="stretch")
+        st.dataframe(
+            display.sort_values("padj", na_position="last"),
+            width="stretch", hide_index=True,
+            column_config={
+                "base_mean": st.column_config.NumberColumn("Base mean", format="%.1f"),
+                "log2fc": st.column_config.NumberColumn("log2FC", format="%.3f"),
+                "pvalue": st.column_config.NumberColumn("p-value", format="%.2e"),
+                "padj": st.column_config.NumberColumn("padj (FDR)", format="%.2e"),
+            },
+        )
+        st.caption(ENGINES[engine]["note"])
 
 
 def page_abtest():
@@ -222,6 +333,9 @@ def page_abtest():
         "that is 'no result', not 'not significant'."
     )
 
+    # Additive: the OSD-104/105 flow above is untouched.
+    upload_abtest()
+
 
 def volcano(table: pd.DataFrame) -> go.Figure:
     """All genes, no thinning — Scattergl renders 22k points without breaking a
@@ -278,6 +392,60 @@ def volcano(table: pd.DataFrame) -> go.Figure:
     return figure
 
 
+def upload_forecast():
+    """'Upload your own time series' — additive. The CBC flow above is untouched."""
+    with st.expander("📤 Upload your own time series", expanded=False):
+        st.caption(
+            f"CSV with a `day` and a `value` column (a group/crew column is ignored "
+            f"for now). `day` must already be a numeric mission day, not a raw "
+            f"'L-92'/'R+1' label. Limits: {MAX_SERIES_BYTES // 1024} KB, minimum 3 "
+            "timepoints."
+        )
+        st.caption(
+            "An uncached forecast peaks at ~236 MB — inside budget — so this runs "
+            "the same three models the CBC page does, with no engine restriction."
+        )
+
+        series_file = st.file_uploader("Series CSV", type=["csv"], key="fc_series")
+        extra_days = st.number_input(
+            "What-if: days past your last point",
+            min_value=0, max_value=365, value=30, step=1, key="fc_extra",
+        )
+
+        used = st.session_state.get("fc_runs", 0)
+        st.caption(f"Runs used this session: {used} / {MAX_RUNS_PER_SESSION}")
+
+        if not st.button("Fit models", key="fc_run"):
+            return
+        if series_file is None:
+            st.error("Upload a series CSV first.")
+            return
+
+        try:
+            check_rate_limit(st.session_state, "fc_runs")
+            series, _ = validate_series(series_file.getvalue())
+        except UploadError as error:
+            st.error(str(error))
+            return
+
+        record_run(st.session_state, "fc_runs")
+
+        with st.spinner("Fitting Prophet, ARIMA and LightGBM on your series…"):
+            try:
+                data = run_forecast(series, int(extra_days))
+            except Exception as error:
+                st.error(f"The fit failed on your data: {error}")
+                return
+
+        st.warning(
+            "**You are viewing results from your own uploaded time series.** This has "
+            "not been validated the way the Inspiration4 CBC panel has, and results "
+            "are **not cached**.",
+            icon="⚠️",
+        )
+        render_forecast(data, int(extra_days))
+
+
 def page_forecasting():
     st.header("Forecasting — Inspiration4 molecular trajectories")
 
@@ -302,6 +470,15 @@ def page_forecasting():
     with st.spinner("Fitting models…"):
         data = forecast_payload(analyte, crew, int(extra_days))
 
+    render_forecast(data, int(extra_days))
+
+    # Additive: the CBC flow above is untouched.
+    upload_forecast()
+
+
+def render_forecast(data: dict, extra_days: int):
+    """Chart + LOO table + what-if. Shared by the CBC flow and the upload flow, so
+    the warnings and caveats are guaranteed identical for both."""
     st.caption(data["caveat"])
     st.plotly_chart(trajectory(data), width="stretch")
 

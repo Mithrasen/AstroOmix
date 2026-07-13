@@ -46,6 +46,24 @@ def run_deseq2(accession: str, min_total_count: int = MIN_TOTAL_COUNT,
     Rounding is applied unconditionally: RSEM emits fractional expected counts
     and DESeq2's NB model requires integers.
     """
+    counts = round_expected_counts(fetch_counts(accession))
+    return deseq2_on_counts(counts, min_total_count=min_total_count, quiet=quiet,
+                            label=accession)
+
+
+def deseq2_on_counts(counts: pd.DataFrame, min_total_count: int = MIN_TOTAL_COUNT,
+                     quiet: bool = True, label: str = "counts") -> pd.DataFrame:
+    """The DESeq2 fit itself, on an already-rounded counts matrix.
+
+    Split out from `run_deseq2` so an uploaded matrix can be analysed without
+    going through the OSDR loader. `run_deseq2`'s behaviour is unchanged — it
+    fetches, rounds, and delegates here.
+
+    NOTE ON MEMORY: this peaks at ~2.4 GB regardless of how small `counts` is —
+    the cost is pydeseq2's worker pool, not the matrix. A 5,000-gene matrix costs
+    essentially the same as a 22,720-gene one. Do not assume a small upload makes
+    this call cheap; it does not. See src/upload/validate.py.
+    """
     # Imported here, not at module scope: pydeseq2 pulls in anndata/scanpy and
     # costs ~100MB of RSS. Most requests are served from the cached DESeq2 table
     # and never call this function, so on a memory-capped free-tier dyno there is
@@ -55,14 +73,13 @@ def run_deseq2(accession: str, min_total_count: int = MIN_TOTAL_COUNT,
     from pydeseq2.dds import DeseqDataSet
     from pydeseq2.ds import DeseqStats
 
-    counts = round_expected_counts(fetch_counts(accession))
     groups = assign_groups(counts.columns)
 
     keep = counts.sum(axis=1) >= min_total_count
     counts = counts.loc[keep]
     if counts.empty:
         raise ValueError(
-            f"No gene in {accession} reached min_total_count={min_total_count}."
+            f"No gene in {label} reached min_total_count={min_total_count}."
         )
 
     # pydeseq2 wants samples as rows, genes as columns.

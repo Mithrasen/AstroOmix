@@ -9,3 +9,14 @@ textColor = "#e6e9ef"
 
 [browser]
 gatherUsageStats = false
+
+[server]
+# Streamlit's default is 200 MB, and it buffers the whole upload into memory
+# BEFORE any application code runs — so our own 5 MB check in src/upload/validate.py
+# could never have stopped a 200 MB file from being read in. This closes that at
+# the framework level.
+#
+# Set to 6, not 5, deliberately: a file between 5 and 6 MB still reaches our
+# validator and gets the clear "over the 5.0 MB limit" message, rather than
+# Streamlit's generic rejection. Anything larger never enters memory at all.
+maxUploadSize = 6
