@@ -117,6 +117,13 @@ td {
   padding: 7px 10px;
   border-bottom: 1px solid rgba(35, 43, 57, 0.5);
   font-variant-numeric: tabular-nums;
+  /* Scientific notation must not wrap: "4.45e-99" breaking into "4.45e-" / "99"
+     is unreadable and looks like two numbers. */
+  white-space: nowrap;
+}
+
+td .note {
+  white-space: normal;
 }
 
 td.gene { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }

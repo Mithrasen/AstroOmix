@@ -29,3 +29,10 @@ export async function getForecast(analyte, crew, extraDays) {
   })
   return data
 }
+
+export async function getIntegrate(accession, limit = 500) {
+  const { data } = await client.get(`/api/integrate/${accession}`, {
+    params: { limit },
+  })
+  return data
+}
