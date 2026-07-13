@@ -15,7 +15,10 @@ CONFIG = Path(__file__).resolve().parents[1] / "config" / "datasets.yaml"
 
 @lru_cache(maxsize=1)
 def load_studies() -> list[dict]:
-    with CONFIG.open() as handle:
+    # encoding is explicit: datasets.yaml is UTF-8 and contains em dashes. Without
+    # this, Python falls back to the platform default — cp1252 on Windows — and the
+    # labels render as mojibake ("Rodent Research 1 â€” soleus").
+    with CONFIG.open(encoding="utf-8") as handle:
         return yaml.safe_load(handle)["studies"]
 
 

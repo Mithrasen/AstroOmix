@@ -49,6 +49,12 @@ from routers.integrate import _sanitise  # noqa: E402
 from routers.studies import load_studies  # noqa: E402
 from src.integrate.cross_reference import cross_reference  # noqa: E402
 from src.settings import allow_refresh  # noqa: E402
+from src.ui.components import (  # noqa: E402
+    animated_counters,
+    cardinality_counters,
+    mission_timeline,
+)
+from src.ui.theme import inject_theme  # noqa: E402
 
 st.set_page_config(
     page_title="AstroOmix",
@@ -56,6 +62,9 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+# Styling only, and it must land before any page content is painted.
+inject_theme()
 
 MODEL_COLORS = {"prophet": "#5aa9e6", "arima": "#c9a227", "lightgbm": "#e05c5c"}
 
@@ -112,6 +121,16 @@ def page_study_explorer():
         "Datasets pulled live from NASA OSDR. Several plausible-looking accessions do "
         "not contain what their titles suggest — see docs/DATA_NOTES.md."
     )
+
+    # Hovering a node shows that dataset's real record from config/datasets.yaml —
+    # organism, tissue, assay, design, notes. Nothing decorative is invented.
+    mission_timeline(studies())
+    st.caption(
+        "Missions in flight order. Hover a node for the dataset's record. "
+        "Rodent Research 1 flew before Inspiration4 (launched 2021-09-16, the anchor "
+        "of the mission-day axis used throughout this app)."
+    )
+
     frame = pd.DataFrame(studies())
     st.dataframe(
         frame[["accession", "label", "organism", "tissue", "assay", "module", "design", "notes"]],
@@ -165,10 +184,13 @@ def page_abtest():
     records = _to_records(results)
     table = pd.DataFrame(records)
 
-    a, b, c = st.columns(3)
-    a.metric("Genes tested", f"{len(table):,}")
-    b.metric("FDR < 0.05", f"{n_significant:,}")
-    c.metric("Method", "DESeq2 (pydeseq2)")
+    # Same three values as the st.metric row it replaces — the count-up animation
+    # lands exactly on the real number and never alters it.
+    animated_counters([
+        {"label": "Genes tested", "value": len(table)},
+        {"label": "FDR < 0.05", "value": n_significant, "color": "#4ec9a0"},
+        {"label": "Method", "text": "DESeq2 (pydeseq2)", "color": "#5aa9e6"},
+    ])
 
     st.plotly_chart(volcano(table), width="stretch")
 
@@ -432,19 +454,9 @@ def page_integration():
         "mappable”, which is a different and much worse claim."
     )
 
-    columns = st.columns(5)
-    for column, key in zip(columns, CARDINALITY):
-        label, color, blurb = CARDINALITY[key]
-        count = data["orthology"]["cardinality"].get(key, 0)
-        with column:
-            st.markdown(
-                f"<div style='border-top:3px solid {color};padding-top:8px'>"
-                f"<div style='font-size:26px;font-weight:700;color:{color}'>{count:,}</div>"
-                f"<div style='font-size:13px;font-weight:600'>{label}</div>"
-                f"<div style='font-size:11px;color:#8b96a8;margin-top:4px'>{blurb}</div>"
-                "</div>",
-                unsafe_allow_html=True,
-            )
+    # Same counts, same labels, same colours — CARDINALITY stays the single source
+    # of truth and is passed in rather than duplicated inside the component.
+    cardinality_counters(data["orthology"]["cardinality"], CARDINALITY)
 
     st.caption(f"Source: {data['orthology']['source']}")
 
