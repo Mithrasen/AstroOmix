@@ -46,7 +46,7 @@ BASE = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
 # NCBI asks every client to identify itself. They are within their rights to
 # block traffic that does not.
 TOOL_NAME = "AstroOmix"
-CONTACT_EMAIL = "your.email@example.com"   # placeholder — swap for a real address
+CONTACT_EMAIL = "bioinfxlife@gmail.com"
 
 CACHE_DIR = Path(__file__).resolve().parents[2] / "data" / "cache" / "literature"
 
