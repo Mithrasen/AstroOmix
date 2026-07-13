@@ -54,6 +54,7 @@ from src.ui.components import (  # noqa: E402
     cardinality_counters,
     mission_timeline,
 )
+from src.ui.assistant_page import render as render_assistant  # noqa: E402
 from src.ui.theme import inject_theme  # noqa: E402
 from src.upload.analyse import ENGINES, run_de, run_forecast  # noqa: E402
 from src.upload.validate import (  # noqa: E402
@@ -710,6 +711,7 @@ PAGES = {
     "A/B Testing": page_abtest,
     "Forecasting": page_forecasting,
     "Integration": page_integration,
+    "Research Assistant": render_assistant,
     "Methods": page_methods,
 }
 
