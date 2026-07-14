@@ -16,7 +16,7 @@ from __future__ import annotations
 import streamlit as st
 
 from src.agent.agent import KeyNotConfigured, ask
-from src.agent.keys import NOT_CONFIGURED_MESSAGE, resolve_api_key
+from src.agent.keys import NOT_CONFIGURED_MESSAGE, diagnose_secrets, resolve_api_key
 from src.ui.assistant_page import _render_tool_calls
 from src.ui.icons import orbit
 from src.ui.literature_cards import render_papers, render_signals
@@ -88,6 +88,11 @@ def render_embedded(scope: str, blurb: str, chips: list[str]) -> None:
     if not resolve_api_key().configured:
         # Graceful, per-tab. The rest of the tab keeps working.
         st.info(NOT_CONFIGURED_MESSAGE, icon="🔑")
+        # WHY it is not configured, in an expander. On Cloud there is no shell to
+        # print from, so without this a correctly-set-but-unreadable secret is
+        # indistinguishable from no secret at all. Key NAMES only — never a value.
+        with st.expander("Diagnostics"):
+            st.caption(diagnose_secrets())
         return
 
     st.caption(blurb)

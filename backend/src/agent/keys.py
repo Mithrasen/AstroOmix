@@ -34,8 +34,11 @@ SECRET_NAME = "ANTHROPIC_API_KEY"
 NOT_CONFIGURED_MESSAGE = (
     "**Research Assistant requires an API key — not configured in this environment.**\n\n"
     "Everything else in AstroOmix works without it. To enable the assistant:\n\n"
-    "* **Streamlit Cloud** — add `ANTHROPIC_API_KEY` under *App settings → Secrets*.\n"
-    "* **Locally** — add `ANTHROPIC_API_KEY=sk-ant-...` to a `.env` file in the repo root."
+    "* **Streamlit Cloud** — under *App settings → Secrets*, paste exactly:\n"
+    '  `ANTHROPIC_API_KEY = "sk-ant-..."` (TOML: the value MUST be quoted, and the '
+    "key must be top-level, not under a `[section]`).\n"
+    "* **Locally** — add `ANTHROPIC_API_KEY=sk-ant-...` to a `.env` file in the repo "
+    "root (a plain `.env`, so no quotes needed there)."
 )
 
 
@@ -68,6 +71,54 @@ def _from_streamlit_secrets() -> str | None:
 
     value = str(value).strip()
     return value or None
+
+
+def diagnose_secrets() -> str:
+    """Why st.secrets did not yield a key — WITHOUT ever revealing a value.
+
+    The broad `except` above is right (a missing secrets file must not crash the
+    page) but it is indiscriminate: a TOML parse error, a misspelled key and a
+    nested `[section]` all collapse into the same silent None, and the user is
+    told "no key" when the truth is "your key is there but I could not read it".
+    On Streamlit Cloud, where you cannot open a shell and print things, that
+    ambiguity is the whole debugging difficulty.
+
+    So this reports what was SEEN: the exception class, or the top-level key NAMES
+    present. Names only. A value is never returned, never logged, never rendered —
+    the point is to debug the wiring, not to print the credential into a browser.
+    """
+    try:
+        import streamlit as st
+    except Exception as error:  # noqa: BLE001
+        return f"streamlit could not be imported ({type(error).__name__})."
+
+    try:
+        names = list(st.secrets.keys())
+    except Exception as error:  # noqa: BLE001
+        # Reached when there is no secrets file at all (normal locally), and ALSO
+        # when the TOML is malformed — e.g. an unquoted value, which is the single
+        # most common way this goes wrong on Cloud.
+        return (
+            f"st.secrets could not be read ({type(error).__name__}). Either no "
+            "secrets are configured, or the TOML is malformed — an unquoted value "
+            "is a parse error."
+        )
+
+    if not names:
+        return "st.secrets is readable but EMPTY — no secrets are configured."
+
+    if SECRET_NAME in names:
+        # The name is present, so the value must be empty or whitespace.
+        return (
+            f"st.secrets contains {SECRET_NAME}, but its value is empty after "
+            "stripping."
+        )
+
+    return (
+        f"st.secrets is readable and contains {len(names)} top-level key(s): "
+        f"{', '.join(sorted(names))} — but NOT {SECRET_NAME}. It must be top-level, "
+        "not nested under a [section]."
+    )
 
 
 def _from_dotenv() -> str | None:
